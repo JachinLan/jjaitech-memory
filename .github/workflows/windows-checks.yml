@@ -25,6 +25,26 @@ jobs:
             [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $file), [ref]$tokens, [ref]$parseErrors) | Out-Null
             if ($parseErrors.Count -gt 0) { $parseErrors | Format-List; throw "PowerShell parse failed: $file" }
           }
+      - name: Probe existing Windows runtimes without installing software
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = Join-Path $PWD 'jjaitech-memory/distribution/bootstrap-windows.ps1'
+          $tokens = $null
+          $parseErrors = $null
+          $tree = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
+          $functions = $tree.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+          foreach ($function in $functions) {
+            if ($function.Name -in @('Find-Python','Find-Node','Find-Bash')) {
+              . ([scriptblock]::Create($function.Extent.Text))
+            }
+          }
+          $Config = Join-Path $env:RUNNER_TEMP 'no-workbuddy-config'
+          $python = Find-Python
+          $node = Find-Node
+          $bash = Find-Bash
+          if (!$python -or !$node -or !$bash) { throw "Runtime discovery failed: Python=$python Node=$node Bash=$bash" }
+          Write-Host "Python=$python Node=$node Bash=$bash"
       - name: Run isolated core and installer tests
         shell: powershell
         run: python -m unittest discover -s jjaitech-memory/tests -v

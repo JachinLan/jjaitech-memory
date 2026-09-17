@@ -4,7 +4,7 @@
   "asset": "jjaitech-memory-windows-1.2.0-rc.2-online.1.zip",
   "sha256": "e40377631d9b68aa89dc18230c947395f3cb8f41b30bf830fa328b0a75846d51",
   "windows_native_test": "NOT RUN",
-  "status": "pilot-unpublished",
+  "status": "pilot",
   "wiki_data_included": false,
   "source_files": {
     ".codebuddy-plugin/plugin.json": "b39f4af180b752d1cab693c2ce4ce0ffe43a55bfd7c3d878f09183d2b714a4a6",
