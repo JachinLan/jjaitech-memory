@@ -1,0 +1,62 @@
+name: Published command smoke test
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  published-command:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      PYTHONUTF8: '1'
+      DISABLE_TELEMETRY: '1'
+      DISABLE_GALILEO: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Download and inspect official Windows WorkBuddy
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $uri = 'https://download.codebuddy.cn/workbuddy/saas/win32-x64-user/WorkBuddy-win32-x64-user-5.5.6.38337834-5f969292.exe'
+          $exe = Join-Path $env:RUNNER_TEMP 'WorkBuddy-5.5.6.exe'
+          curl.exe --fail --location --retry 2 --max-time 300 --output $exe $uri
+          if ($LASTEXITCODE -ne 0) { throw 'Official download failed' }
+          $signature = Get-AuthenticodeSignature -LiteralPath $exe
+          Write-Host "Official package signature=$($signature.Status) signer=$($signature.SignerCertificate.Subject)"
+          if ($signature.Status -ne 'Valid') { throw 'Invalid official package signature' }
+          $unpack = Join-Path $env:RUNNER_TEMP 'official-workbuddy'
+          & 'C:\Program Files\7-Zip\7z.exe' x $exe "-o$unpack" -y -bso0
+          if ($LASTEXITCODE -ne 0) { throw 'Official installer cannot be extracted with 7-Zip; no installer was executed' }
+          $candidates = @(Get-ChildItem -LiteralPath $unpack -Filter codebuddy -Recurse -File | Where-Object { $_.FullName -match '[\\/]cli[\\/]bin[\\/]codebuddy$' })
+          if ($candidates.Count -ne 1) { throw "Expected one bundled real CLI, found $($candidates.Count)" }
+          $cliRoot = Split-Path (Split-Path $candidates[0].FullName)
+          $targetParent = Join-Path $env:LOCALAPPDATA 'Programs\WorkBuddy\resources\app.asar.unpacked'
+          New-Item -ItemType Directory -Force -Path $targetParent | Out-Null
+          Copy-Item -LiteralPath $cliRoot -Destination (Join-Path $targetParent 'cli') -Recurse
+          $cli = Join-Path $targetParent 'cli\bin\codebuddy'
+          node $cli --version
+          if ($LASTEXITCODE -ne 0) { throw 'Actual bundled CLI cannot run' }
+          # Empty disposable configuration: no login, credentials or model requests.
+          $config = Join-Path $env:USERPROFILE '.workbuddy'
+          New-Item -ItemType Directory -Force -Path $config | Out-Null
+          '{"theme":"smoke-test-sentinel"}' | Set-Content -LiteralPath (Join-Path $config 'settings.json') -Encoding UTF8
+      - name: Run the exact public command twice with installer consent
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function global:Read-Host {
+            param([string]$Prompt)
+            if ($Prompt -eq 'Type YES to continue') { return 'YES' }
+            throw "Unexpected interactive prompt in disposable test: $Prompt"
+          }
+          # Same command given to employees; only YES input is supplied by this test.
+          irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.2.0-rc.2-online.1/install.ps1 | iex
+          irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.2.0-rc.2-online.1/install.ps1 | iex
+      - name: Check actual registration, paths, idempotency and local hook storage
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -X utf8 .github/tests/verify_install.py
