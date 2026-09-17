@@ -30,8 +30,16 @@ jobs:
           $unpack = Join-Path $env:RUNNER_TEMP 'official-workbuddy'
           & 'C:\Program Files\7-Zip\7z.exe' x $exe "-o$unpack" -y -bso0
           if ($LASTEXITCODE -ne 0) { throw 'Official installer cannot be extracted with 7-Zip; no installer was executed' }
+          $nestedArchives = @(Get-ChildItem -LiteralPath $unpack -Filter '*.7z' -Recurse -File)
+          foreach ($nested in $nestedArchives) {
+            & 'C:\Program Files\7-Zip\7z.exe' x $nested.FullName "-o$unpack\payload" -y -bso0
+            if ($LASTEXITCODE -ne 0) { throw 'Nested official payload extraction failed' }
+          }
           $candidates = @(Get-ChildItem -LiteralPath $unpack -Filter codebuddy -Recurse -File | Where-Object { $_.FullName -match '[\\/]cli[\\/]bin[\\/]codebuddy$' })
-          if ($candidates.Count -ne 1) { throw "Expected one bundled real CLI, found $($candidates.Count)" }
+          if ($candidates.Count -ne 1) {
+            Get-ChildItem -LiteralPath $unpack -Recurse -File | Select-Object -First 60 -ExpandProperty FullName
+            throw "Expected one bundled real CLI, found $($candidates.Count)"
+          }
           $cliRoot = Split-Path (Split-Path $candidates[0].FullName)
           $targetParent = Join-Path $env:LOCALAPPDATA 'Programs\WorkBuddy\resources\app.asar.unpacked'
           New-Item -ItemType Directory -Force -Path $targetParent | Out-Null
