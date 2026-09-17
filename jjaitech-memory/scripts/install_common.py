@@ -12,6 +12,7 @@ import uuid
 
 PLUGIN='jjaitech-memory@jjaitech-local'
 MARKET='jjaitech-local'
+MEMORY_TOOLS=['mcp__jjaitech-memory__'+name for name in ('write_memory','defer_memory','search_memory')]
 
 
 def read(path, default=None):
@@ -45,7 +46,18 @@ def with_vault_permission(settings, vault):
     return result,added
 
 
-def restore_owned_config(config, before, vault, permission_added):
+def with_memory_tool_permissions(settings):
+    result=copy.deepcopy(settings)
+    permissions=result.setdefault('permissions',{})
+    if not isinstance(permissions,dict):raise ValueError('permissions must be an object')
+    allow=permissions.setdefault('allow',[])
+    if not isinstance(allow,list) or any(not isinstance(x,str) for x in allow):raise ValueError('permissions.allow must be a string array')
+    added=[name for name in MEMORY_TOOLS if name not in allow]
+    allow.extend(added)
+    return result,added
+
+
+def restore_owned_config(config, before, vault, permission_added, tool_rules_added=()):
     # Restore only plugin-owned keys; never replace all settings with a stale copy.
     path=config/'settings.json';current=read(path,{})
     plugins=current.setdefault('enabledPlugins',{})
@@ -60,6 +72,12 @@ def restore_owned_config(config, before, vault, permission_added):
         if not fs.get('allowWrite') and 'allowWrite' not in original_fs:fs.pop('allowWrite',None)
         if not fs and 'filesystem' not in before.get('settings.json',{}).get('sandbox',{}):current.get('sandbox',{}).pop('filesystem',None)
         if not current.get('sandbox') and 'sandbox' not in before.get('settings.json',{}):current.pop('sandbox',None)
+    if tool_rules_added:
+        permissions=current.get('permissions',{})
+        permissions['allow']=[x for x in permissions.get('allow',[]) if x not in tool_rules_added]
+        old_permissions=before.get('settings.json',{}).get('permissions',{})
+        if not permissions.get('allow') and 'allow' not in old_permissions:permissions.pop('allow',None)
+        if not permissions and 'permissions' not in before.get('settings.json',{}):current.pop('permissions',None)
     write(path,current)
     for relative,key,parent in [('plugins/installed_plugins.json',PLUGIN,'plugins'),('plugins/known_marketplaces.json',MARKET,None)]:
         target=config/relative
@@ -99,11 +117,16 @@ def deploy(source, config, vault, python, run_cli):
             for hook in group['hooks']:
                 hook['command']=shlex.quote(Path(python).as_posix())+' -X utf8 "${CODEBUDDY_PLUGIN_ROOT}/scripts/memory.py" hook '+event
     write(staged/'hooks/hooks.json',hooks)
+    mcp=read(staged/'.mcp.json',None)
+    if mcp:
+        mcp['mcpServers']['jjaitech-memory']['command']=str(Path(python))
+        write(staged/'.mcp.json',mcp)
     old_manifest=read(market/'.codebuddy-plugin/marketplace.json',None)
     old_target=backup/'previous-plugin'
     receipt={'status':'staged','version':read(staged/'.codebuddy-plugin/plugin.json')['version'],
              'vault':str(vault),'permission_added':permission_added,'backup':str(backup)}
     write(backup/'receipt.json',receipt)
+    tool_rules_added=[]
     installed=False
     old_moved=False
     try:
@@ -120,17 +143,18 @@ def deploy(source, config, vault, python, run_cli):
         write(market/'.codebuddy-plugin/marketplace.json',{'name':MARKET,'owner':{'name':'JJ AI TECH'},'plugins':[{'name':'jjaitech-memory','source':'./jjaitech-memory'}]})
         # Re-read settings after validation to preserve unrelated concurrent changes.
         fresh,permission_added=with_vault_permission(read(config/'settings.json',{}),vault)
+        if mcp:fresh,tool_rules_added=with_memory_tool_permissions(fresh)
         write(config/'settings.json',fresh)
         for args in [['plugin','marketplace','add',str(market)],['plugin','install',PLUGIN],['plugin','update',PLUGIN]]:
             run_cli(args)
-        receipt.update(status='installed',permission_added=permission_added)
+        receipt.update(status='installed',permission_added=permission_added,added_tool_rules=tool_rules_added)
         write(backup/'receipt.json',receipt)
         return receipt
     except Exception as exc:
         rollback_errors=[]
         if installed or old_moved:
             if installed:
-                try:restore_owned_config(config,before,vault,permission_added)
+                try:restore_owned_config(config,before,vault,permission_added,tool_rules_added)
                 except Exception as error:rollback_errors.append('settings:'+type(error).__name__)
             # Keep the failed candidate as evidence rather than deleting it.
             try:
@@ -147,11 +171,15 @@ def deploy(source, config, vault, python, run_cli):
 
 
 def revoke_owned_permission(config, receipt):
-    """Explicit administrator action; leaves all knowledge and backups intact."""
-    if not receipt.get('permission_added'):return False
+    """Explicit admin action; remove only grants this installation introduced."""
+    if not receipt.get('permission_added') and not receipt.get('added_tool_rules'):return False
     path=Path(config)/'settings.json';settings=read(path,{})
-    fs=settings.get('sandbox',{}).get('filesystem',{})
-    previous=fs.get('allowWrite',[])
-    fs['allowWrite']=[x for x in previous if os.path.normcase(os.path.normpath(x))!=os.path.normcase(os.path.normpath(receipt['vault']))]
+    previous=copy.deepcopy(settings)
+    if receipt.get('permission_added'):
+        fs=settings.get('sandbox',{}).get('filesystem',{})
+        fs['allowWrite']=[x for x in fs.get('allowWrite',[]) if os.path.normcase(os.path.normpath(x))!=os.path.normcase(os.path.normpath(receipt['vault']))]
+    if receipt.get('added_tool_rules'):
+        permissions=settings.get('permissions',{})
+        permissions['allow']=[x for x in permissions.get('allow',[]) if x not in receipt['added_tool_rules']]
     write(path,settings)
-    return previous!=fs['allowWrite']
+    return previous!=settings

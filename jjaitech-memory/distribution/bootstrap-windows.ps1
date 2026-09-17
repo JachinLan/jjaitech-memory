@@ -19,6 +19,7 @@ Write-Host 'JJ AI TECH memory - Windows pilot (not yet native-Windows certified)
 Write-Host 'Missing Python, Node.js or Git may be installed through Microsoft WinGet.'
 Write-Host 'Your current WorkBuddy model processes conversation/retrieved text; files stay local.'
 Write-Host 'WorkBuddy tools will be allowed to write ONLY your AI-Wiki folder in addition to existing permissions.'
+Write-Host 'Adds exactly three local memory MCP tool permissions: write_memory, defer_memory, search_memory.'
 Write-Host 'No extra model API. No Wiki upload. Existing account permissions are not widened.'
 if ((Read-Host 'Type YES to continue') -cne 'YES') { throw 'Installation cancelled; no changes made.' }
 function Refresh-Path {

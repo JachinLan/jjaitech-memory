@@ -78,4 +78,19 @@ class InstallerTests(unittest.TestCase):
         twice,again=i.with_vault_permission(once,self.vault)
         self.assertTrue(added);self.assertFalse(again);self.assertEqual(once,twice)
 
+
+    def test_mcp_permissions_are_narrow_and_rollback_owned_only(self):
+        i.write(self.source/'.mcp.json',{'mcpServers':{'jjaitech-memory':{'command':'python3','args':['server.py']}}})
+        original=copy.deepcopy(self.original);original['permissions']={'allow':['Read',i.MEMORY_TOOLS[0]]}
+        i.write(self.config/'settings.json',original)
+        def fail(args):
+            if args[:2]==['plugin','install']:raise RuntimeError('test rollback')
+        with self.assertRaises(RuntimeError):i.deploy(self.source,self.config,self.vault,sys.executable,fail)
+        self.assertEqual(i.read(self.config/'settings.json'),original)
+        receipt=i.deploy(self.source,self.config,self.vault,sys.executable,lambda args:None)
+        actual=i.read(self.config/'settings.json')['permissions']['allow']
+        self.assertEqual(set(actual),{'Read',*i.MEMORY_TOOLS})
+        self.assertNotIn('DeferExecuteTool',actual)
+        self.assertNotIn(i.MEMORY_TOOLS[0],receipt['added_tool_rules'])
+
 if __name__=='__main__':unittest.main(verbosity=2)

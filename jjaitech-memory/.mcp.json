@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "jjaitech-memory": {
+      "command": "python3",
+      "args": [
+        "-X",
+        "utf8",
+        "${CODEBUDDY_PLUGIN_ROOT}/scripts/memory_mcp.py"
+      ],
+      "defer_loading": false
+    }
+  }
+}

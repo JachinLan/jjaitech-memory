@@ -11,7 +11,7 @@ import sqlite3
 import uuid
 import zipfile
 
-SCHEMA = 'jjaitech-memory-portable/1'
+SCHEMA = 'jjaitech-memory-portable/2'
 MAX_BYTES = 512 * 1024 * 1024
 
 
@@ -32,7 +32,7 @@ def read_bundle(path):
             if (item.external_attr >> 16) & 0o170000 == 0o120000:
                 raise ValueError('archive symlinks forbidden')
         manifest = json.loads(z.read('manifest.json').decode('utf-8'))
-        if manifest.get('schema') != SCHEMA or manifest.get('kind') not in ('private-backup', 'work-share'):
+        if manifest.get('schema') not in (SCHEMA,'jjaitech-memory-portable/1') or manifest.get('kind') not in ('private-backup', 'work-share'):
             raise ValueError('unsupported bundle schema or kind')
         expected = manifest.get('files')
         if not isinstance(expected, dict) or set(names) != set(expected) | {'manifest.json'}:
@@ -74,7 +74,7 @@ def validate_rows(manifest, data, categories):
     for f in facts:
         if not isinstance(f,dict) or not re.fullmatch(r'[a-f0-9]{64}',f.get('id','')) or f['id'] in fact_ids:
             raise ValueError('invalid/duplicate fact ID')
-        if f.get('entity_id') not in ids or f.get('kind') not in ('reported','confirmed','inference','ai_suggestion'):
+        if f.get('entity_id') not in ids or f.get('kind') not in ('reported','confirmed','documented','inference','ai_suggestion'):
             raise ValueError('invalid fact reference/type')
         for key,limit in [('text',2000),('evidence',2000),('session',300),('date',100),('job',100)]:
             if not isinstance(f.get(key),str) or len(f[key])>limit:
@@ -122,6 +122,9 @@ def export(memory, selected_ids=None):
             f['job']='redacted'
     data={'entities.jsonl':encode(entities),'facts.jsonl':encode(facts)}
     if kind=='private-backup':
+        with memory.dbopen() as db:
+            data['sources.jsonl']=encode(db.execute('SELECT * FROM sources ORDER BY id'))
+            data['fact_sources.jsonl']=encode(db.execute('SELECT * FROM fact_sources ORDER BY fact_id'))
         budget=sum(map(len,data.values()))
         for prefix in [*memory.CATEGORIES,'Raw','Share']:
             for p in (memory.ROOT/prefix).rglob('*'):
@@ -173,6 +176,12 @@ def restore(memory,path):
     if manifest['kind']!='private-backup':
         raise ValueError('use share-import for work-share bundles')
     entities,facts=validate_rows(manifest,data,memory.CATEGORIES)
+    import sources
+    source_records=[json.loads(x) for x in data.get('sources.jsonl',b'').decode('utf-8').splitlines()]
+    source_ids=sources.validate_records(memory,source_records,data)
+    fact_sources=[json.loads(x) for x in data.get('fact_sources.jsonl',b'').decode('utf-8').splitlines()]
+    fids={f['id'] for f in facts}
+    if any(r.get('fact_id') not in fids or r.get('source_id') not in source_ids for r in fact_sources):raise ValueError('invalid fact provenance')
     with memory.dbopen() as db:
         if db.execute('SELECT COUNT(*) FROM entities').fetchone()[0]:
             raise ValueError('restore target must have no entities; use a new vault')
@@ -182,7 +191,7 @@ def restore(memory,path):
     for e in entities:
         slug=re.sub(r'[^\w\-一-龥]','-',e['name']).strip('-')[:64] or 'entity'
         e['path']=f"{e['category']}/{slug}-{e['id'][:8]}.md"
-    allowed={'SCHEMA.md','index.md','log.md','owner.json','config.json','entities.jsonl','facts.jsonl'}
+    allowed={'SCHEMA.md','index.md','log.md','owner.json','config.json','entities.jsonl','facts.jsonl','sources.jsonl','fact_sources.jsonl'}
     for name in data:
         if name not in allowed and not name.startswith(tuple(p+'/' for p in [*memory.CATEGORIES,'Raw','Share','recovery'])):
             raise ValueError('unexpected private backup file')
@@ -210,8 +219,13 @@ def restore(memory,path):
             db.execute('INSERT INTO entities VALUES (?,?,?,?,?,?)',tuple(e[k] for k in ['id','category','name','aliases','domain','path']))
         for f in facts:
             db.execute('INSERT INTO facts VALUES (?,?,?,?,?,?,?,?,?)',tuple(f[k] for k in ['id','entity_id','text','kind','date','session','evidence','relations','job']))
+        for r in source_records:
+            db.execute('INSERT INTO sources VALUES (?,?,?,?,?,?,?,?,?)',tuple(r[k] for k in ['id','title','original_path','snapshot_path','sha256','captured_at','session','scope','chars']))
+            sources.index_passages(memory,db,r,data[r['snapshot_path']].decode('utf-8'))
+        for r in fact_sources:db.execute('INSERT INTO fact_sources VALUES (?,?)',(r['fact_id'],r['source_id']))
         for e in entities:db.execute('INSERT INTO render_pending VALUES (?)',(e['id'],))
     memory.recover_rendering()
+    sources.catalog(memory)
     marker.unlink()
     return {'restored_entities':len(entities),'restored_facts':len(facts),
             'enabled':False,'notice':'已恢复到独立资料库；先核对，再明确允许新客户端/模型处理。旧待办保留作恢复材料，不自动续跑。'}

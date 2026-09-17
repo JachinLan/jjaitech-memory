@@ -54,7 +54,7 @@ class ResilienceTests(unittest.TestCase):
             db.execute('PRAGMA user_version=0')
         with m.lock():pass
         with m.dbopen() as db:
-            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],2)
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],3)
             self.assertEqual([tuple(r) for r in db.execute('SELECT * FROM facts ORDER BY id')],before)
         backup=next((m.ROOT/'.state/backups').glob('before-schema-0-*.sqlite3'))
         with contextlib.closing(sqlite3.connect(backup)) as db:

@@ -131,6 +131,7 @@ def main():
         raise RuntimeError('Finish pending tasks and quit WorkBuddy before installation. Re-run with --cli if needed; do not mix old and new Hooks on one vault.')
     print('This is a Windows pilot build, not yet tested on a physical Windows computer.')
     print('Installs only local plugin code. Creates YOUR ~/AI-Wiki, permits ALL WorkBuddy tools to write that vault,')
+    print('Adds only the three local jjaitech-memory MCP tool permissions (write, defer, search).')
     print('and lets your current WorkBuddy model process new conversations and selected Wiki text. No extra model API or cloud sync.')
     if not args.consent and input('Type YES to install, or anything else to cancel: ').strip()!='YES':
         print('Cancelled.');return

@@ -48,7 +48,7 @@ class MemoryTests(unittest.TestCase):
         response, _ = self.request()
         self.assertFalse(response['continue'])
         self.assertEqual(m.hook('Stop', self.p), {})
-        self.assertEqual(m.hook('Stop', {**self.p,'stop_hook_active':True}), {})
+        self.assertNotIn('continue',m.hook('Stop', {**self.p,'stop_hook_active':True}))
         self.assertEqual(len(list((m.ROOT/'.state/jobs').glob('*.json'))),1)
 
     def test_entity_merge_recall_and_dates(self):
