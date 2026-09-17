@@ -53,3 +53,9 @@ python -m unittest discover -s jjaitech-memory/tests -v
 ```
 
 Only allowlisted code is packaged. Release ZIPs do not include personal Wikis, credentials or production conversation logs. Source publication does not grant any recipient access to a contributor's Wiki.
+
+## Public command installation evidence
+
+[Exact published command test — passed](https://github.com/JachinLan/jjaitech-memory/actions/runs/35191533767): ran the published online.1 command twice on a disposable Windows runner using the actual CLI 2.137.1 extracted from Tencent-signed WorkBuddy 5.5.6.38337834. Verified plugin registration, source hashes, permission idempotency, unrelated settings preservation and local Raw hook deduplication. The test supplied YES consent and had Python/Node/Git already installed. It used an empty configuration, no login and no model calls. It does **not** establish Windows desktop memory save/recall, fresh dependency installation, or compatibility with every company endpoint policy.
+
+Before distribution, one employee-owned test computer must still verify a true low-sensitivity work preference is saved, recalled in a new conversation, and recalled again after a full WorkBuddy restart. Check actual Raw/Work files and doctor output, rather than relying on the model saying it remembered.
