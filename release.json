@@ -1,0 +1,19 @@
+{
+  "plugin_version": "1.2.0-rc.2",
+  "distribution_revision": 1,
+  "asset": "jjaitech-memory-windows-1.2.0-rc.2-online.1.zip",
+  "sha256": "e40377631d9b68aa89dc18230c947395f3cb8f41b30bf830fa328b0a75846d51",
+  "windows_native_test": "NOT RUN",
+  "status": "pilot-unpublished",
+  "wiki_data_included": false,
+  "source_files": {
+    ".codebuddy-plugin/plugin.json": "b39f4af180b752d1cab693c2ce4ce0ffe43a55bfd7c3d878f09183d2b714a4a6",
+    "hooks/hooks.json": "a6582c6dc8d41c425e063feea8710fd6f7cc031c9e01d3fd66970e9b798fbb52",
+    "scripts/memory.py": "ac10a9a040600006c016cb81faef630146010b38a0ca8ba1ce9f3df46aaf71a9",
+    "scripts/portable.py": "9202611ae1672402aaacd9ca68a58e8acc0578e854c51b76d0070bc846947399",
+    "scripts/install_common.py": "30b0475e9bf5178d1f9db1fe4a1e97b26efdbdb186dea795542b6466c219379d",
+    "deployment/install_windows.py": "72fd5bfe10247e3613f847d313dd7684116dfdcef3d4c0fac5ea7e1e63d0e318",
+    "distribution/bootstrap-windows.ps1": "92efe943781de0c05f4b6ad76c15aebe9f0e919cf7b63ced16c486f0ac620b86"
+  },
+  "planned_url": "https://github.com/JachinLan/jjaitech-memory/releases/download/v1.2.0-rc.2-online.1/jjaitech-memory-windows-1.2.0-rc.2-online.1.zip"
+}
