@@ -1,3 +1,4 @@
+import contextlib
 import importlib.util
 import json
 import os
@@ -56,7 +57,7 @@ class ResilienceTests(unittest.TestCase):
             self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],2)
             self.assertEqual([tuple(r) for r in db.execute('SELECT * FROM facts ORDER BY id')],before)
         backup=next((m.ROOT/'.state/backups').glob('before-schema-0-*.sqlite3'))
-        with sqlite3.connect(backup) as db:
+        with contextlib.closing(sqlite3.connect(backup)) as db:
             self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],0)
             self.assertEqual(db.execute('SELECT * FROM facts ORDER BY id').fetchall(),before)
 
@@ -220,7 +221,7 @@ class ResilienceTests(unittest.TestCase):
     def test_daily_database_snapshot_exists(self):
         self.ingest()
         backup=next((m.ROOT/'.state/backups').glob('*.sqlite3'))
-        with sqlite3.connect(backup) as db:
+        with contextlib.closing(sqlite3.connect(backup)) as db:
             self.assertEqual(db.execute('PRAGMA integrity_check').fetchone()[0],'ok')
             self.assertEqual(db.execute('SELECT COUNT(*) FROM facts').fetchone()[0],0)
 
