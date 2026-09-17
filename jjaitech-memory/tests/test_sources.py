@@ -196,3 +196,14 @@ class SourceTests(unittest.TestCase):
     def test_requested_draft_is_not_fast_fact_mode(self):
         self.assertTrue(m.fast_recall('之前领导提到的 要写的新一期小广告 什么内容？几个展会对吧 怎么做？重点是？'))
         self.assertFalse(m.fast_recall('之前领导提到的展会重点是什么？请帮我写一份完整报告。'))
+
+    def test_joined_quote_rejected_with_actionable_fact_location(self):
+        job,_=self.job();j=m.jread(m.ROOT/'.state/jobs'/(job+'.json'),{})
+        source=next(x for x in j['messages'] if x['role']=='source')
+        fact={'text':'德国为重点','kind':'documented','evidence':'全年展会...德国为重点','source_id':source['source_id']}
+        plan={'entities':[{'category':'Projects','domain':'Work','name':'展会回顾','facts':[fact]}]}
+        result=m.submit(job,plan)
+        self.assertEqual(result['status'],'invalid')
+        self.assertIn('entities[0].facts[0]',result['error'])
+        fact['evidence']='全年展会回顾以德国为重点'
+        self.assertEqual(m.submit(job,plan)['status'],'applied')
