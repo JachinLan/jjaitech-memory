@@ -17,8 +17,9 @@ irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.3.0-rc.3-onli
 - Mac 与 Windows：89 项回归测试通过。
 - WorkBuddy 5.5.6 / CLI 2.137.1，当前登录账号真实模型，隔离文件读入、自动结构化写入、原文件移走后跨会话召回通过；本次46.17秒/10.94秒。
 - Mac 桌面 Hy4 preview：同一历史问题由原7分43秒降至本次35秒；这是单次测量，不是每次速度保证。
+- Mac 桌面实际读取长会议记录后，自动一次写入6条 documented 事实；含主任务和整理共约116秒，退出后Raw与完整transcript逐字及哈希一致。最终新会话再次召回约35秒，无冗余Writer。
 - Windows CI 检查使用官方安装包内真实CLI；不含用户账号、模型调用或真实资料。每位同事仍应完成一次本人账号的虚构资料验收。
-- [Windows 回归结果](https://github.com/JachinLan/jjaitech-memory/actions/runs/35207235022)；公开安装命令专项结果见 [Actions](https://github.com/JachinLan/jjaitech-memory/actions/workflows/one-command-smoke.yml)。
+- [Windows 回归结果](https://github.com/JachinLan/jjaitech-memory/actions/runs/35207235022)；[同一公开命令连续安装两次：通过](https://github.com/JachinLan/jjaitech-memory/actions/runs/35207611586)。验证实际注册、权限不重复、无关配置保留、本地 MCP 和 Raw 去重。
 
 ## 数据流
 
