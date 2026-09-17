@@ -70,9 +70,10 @@ def extract(raw, wiki_root):
         if role=='assistant' and isinstance(blocks,list):
             tool_calls.extend((b.get('id'),b.get('name'),b.get('input',{})) for b in blocks if isinstance(b,dict) and b.get('type')=='tool_use')
         for call_id,name,args in tool_calls:
-            if name!='Read' or not isinstance(args,dict):continue
+            if name!='Read' or not isinstance(args,dict) or not isinstance(call_id,str) or not call_id:continue
             path=args.get('file_path','')
             if not isinstance(path,str) or not path or len(path)>4096:continue
+            if not (path.startswith(('/', '\\')) or re.match(r'^[A-Za-z]:[\\/]',path)):continue
             norm=normalized(path)
             # Recalled Wiki text and internal host memory are not new source input.
             if norm.startswith(normalized(str(wiki_root))+'/') or '/.workbuddy/' in norm or '/.codebuddy/' in norm:continue
@@ -84,7 +85,7 @@ def extract(raw, wiki_root):
         for call_id,output,error in tool_results:
             if error or call_id not in calls:continue
             text=content_text(output)
-            text=re.sub(r'(?m)^\s*\d+[→\t]\s?','',text).strip()
+            text=re.sub(r'(?m)^[ \t]*\d+[→\t]','',text).replace('\r\n','\n').strip()
             if not text or text.startswith(('Error:','File does not exist','Permission denied')):continue
             results.append({'path':calls.pop(call_id),'text':text,'scope':'read_excerpt'})
     return results
@@ -166,7 +167,7 @@ def search(memory,query,budget=4500,limit=3):
             text=row['body'][:min(1800,budget)]
             out.append({'type':'document_excerpt','source_id':r['id'],'title':r['title'],'path':r['snapshot_path'],
                         'source_session':r['session'],'captured_at':r['captured_at'],'scope':r['scope'],
-                        'offset':row['offset'],'text':text,'status':'文件记载，未作独立核验'})
+                        'offset':row['offset'],'text':text,'status':'文件记载，未作独立核验；captured_at是归档时间，不是业务发生日期'})
             budget-=len(text)
             if len(out)>=limit or budget<200:break
     return out

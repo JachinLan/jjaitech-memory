@@ -160,3 +160,39 @@ class SourceTests(unittest.TestCase):
         self.assertNotIn('sk-thisisasyntheticsecret',retrieved+queued)
         raw=next((m.ROOT/'Raw/Sources').glob('*.txt')).read_text()
         self.assertIn('sk-thisisasyntheticsecret',raw) # Raw evidence remains complete and local.
+
+    def test_blank_lines_have_same_hash_before_and_after_read_flush(self):
+        text='# 会议\n\n展会要照片。\n\n预算不含税。'
+        direct=sources.extract('\n'.join(map(json.dumps,self.rows(text=text))),m.ROOT)[0]['text']
+        numbered='\n'.join(str(i+1)+'→'+line for i,line in enumerate(text.splitlines()))
+        rows=self.rows();rows[2]['output']['text']=numbered
+        flushed=sources.extract('\n'.join(map(json.dumps,rows)),m.ROOT)[0]['text']
+        self.assertEqual(direct,flushed)
+        self.assertIn('\n\n',flushed)
+
+    def test_broad_history_scan_denied_but_explicit_scope_allowed(self):
+        q='之前领导提到的展会重点是什么？'
+        m.hook('UserPromptSubmit',{**self.p,'prompt':q})
+        payload={**self.p,'tool_name':'Bash','tool_input':{'command':f'grep -r "展会" {Path.home()} | head -20'}}
+        denial=m.hook('PreToolUse',payload)
+        self.assertEqual(denial['hookSpecificOutput']['permissionDecision'],'deny')
+        payload['tool_input']['command']='grep "展会" /tmp/specific-meeting.md'
+        self.assertEqual(m.hook('PreToolUse',payload),{})
+        m.hook('UserPromptSubmit',{**self.p,'prompt':q+'请全盘搜索。'})
+        payload['tool_input']['command']=f'find {Path.home()} -name "*.md"'
+        self.assertEqual(m.hook('PreToolUse',payload),{})
+
+    def test_broad_guard_not_applied_to_unrelated_work(self):
+        m.hook('UserPromptSubmit',{**self.p,'prompt':'帮我整理整个Downloads中的文档'})
+        self.assertEqual(m.hook('PreToolUse',{**self.p,'tool_name':'Bash','tool_input':{'command':f'find {Path.home()}/Downloads -name "*.md"'}}),{})
+
+    def test_fast_history_lookup_does_not_create_unrequested_widgets(self):
+        m.hook('UserPromptSubmit',{**self.p,'prompt':'之前领导提到的展会重点是什么？'})
+        result=m.hook('PreToolUse',{**self.p,'tool_name':'DeferExecuteTool','tool_input':{'toolName':'show_widget','params':{}}})
+        self.assertEqual(result['hookSpecificOutput']['permissionDecision'],'deny')
+        m.hook('UserPromptSubmit',{**self.p,'prompt':'之前领导提到的展会重点是什么？请做一张流程图。'})
+        self.assertEqual(m.hook('PreToolUse',{**self.p,'tool_name':'show_widget','tool_input':{}}),{})
+
+    def test_requested_draft_is_not_fast_fact_mode(self):
+        self.assertTrue(m.fast_recall('之前领导提到的 要写的新一期小广告 什么内容？几个展会对吧 怎么做？重点是？'))
+        self.assertFalse(m.fast_recall('之前领导提到的展会重点是什么？请帮我写一份完整报告。'))

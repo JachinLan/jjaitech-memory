@@ -55,6 +55,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Grep|Glob|DeferExecuteTool|read_me|show_widget",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CODEBUDDY_PLUGIN_ROOT}/scripts/memory.py\" hook PreToolUse",
+            "timeout": 20
+          }
+        ]
+      }
     ]
   }
 }
