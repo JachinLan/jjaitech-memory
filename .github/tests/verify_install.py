@@ -23,7 +23,7 @@ entries=registry['plugins'][key]
 assert len(entries)==1 and entries[0]['version']==json.loads(Path('release.json').read_text())['plugin_version']
 installed=Path(entries[0]['installPath'])
 expected=json.loads(Path('release.json').read_text())['source_files']
-for rel in ['scripts/memory.py','scripts/portable.py','scripts/sources.py','scripts/memory_mcp.py','scripts/retrieval_guard.py']:
+for rel in ['scripts/memory.py','scripts/portable.py','scripts/sources.py','scripts/quality.py','scripts/memory_mcp.py','scripts/retrieval_guard.py']:
     assert hashlib.sha256((installed/rel).read_bytes()).hexdigest()==expected[rel]
 requests='\n'.join(json.dumps({'jsonrpc':'2.0','id':i,'method':method}) for i,method in enumerate(['initialize','tools/list'],1))+'\n'
 r=subprocess.run([sys.executable,str(installed/'scripts/memory_mcp.py')],input=requests,text=True,capture_output=True,check=True)

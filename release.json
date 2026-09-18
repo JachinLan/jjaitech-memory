@@ -1,26 +1,25 @@
 {
-  "plugin_version": "1.3.0-rc.3",
+  "plugin_version": "1.4.0-rc.1",
   "distribution_revision": 1,
-  "asset": "jjaitech-memory-windows-1.3.0-rc.3-online.1.zip",
-  "sha256": "aa8600b61d7fc59b6f1ffefee9d77f1112af78229fa70cb25b505161ff50627d",
-  "windows_native_test": "89 regression tests passed on windows-latest; authenticated Windows desktop model not tested",
+  "asset": "jjaitech-memory-windows-1.4.0-rc.1-online.1.zip",
+  "sha256": "2fb2d77293e3dd4b0c6df3adee2a94ae33f265b4da67cf79ed31fe13dfc57160",
+  "windows_native_test": "102 regression tests passed; employee Windows desktop model not tested",
   "status": "pilot-release",
   "wiki_data_included": false,
   "source_files": {
-    ".codebuddy-plugin/plugin.json": "961a30994a9d00498c8f5544dda18e3c535e57d8e6ae21aa8a4516fd82eeeb12",
+    ".codebuddy-plugin/plugin.json": "0000f6f73b34165ca6e35b1fa87d5b7895b985df2b31d82b5eae7331efd4d476",
     ".mcp.json": "b2ebdaca4fdd5bbc072f36f8df2a6b1e0fa176786ec2e064f9afdf842c8f61ab",
-    "hooks/hooks.json": "88fbdd0482fd85b3c679808aa465a4c051813386247c1b1c0e87e81d911a5549",
-    "scripts/memory.py": "6e87bd7c2eaed7b0360debca3f5513cea6f26f0821b5b2324993e8978e3642e0",
+    "hooks/hooks.json": "25a32f0c411427e4d7417d3637aa31353fe225108d386cf54b01b61445b40c14",
+    "scripts/memory.py": "6eaace180dd153c94f859f8592a0978ab8bdca51a2f7f9cacb72c2a321e95ea7",
     "scripts/sources.py": "12fe0ff1c7cb2bfea1204ad5a2be8d3b5c4e02296e4b1b77b062b5b5ae3acba1",
-    "scripts/memory_mcp.py": "0f5994610cf00f3e73b86e296d6db761e72c2abb67a4b2c144439dfd77ce56f3",
+    "scripts/quality.py": "834cf991211602e4c543dec6a0ea7e1e93f8897c52b808f11baf630b71b954e2",
+    "scripts/memory_mcp.py": "296a3dc76dd8de02bbd4e16bd62f8fa5ee5b4c6b3c49940d22f3ca8a0de54ca0",
     "scripts/retrieval_guard.py": "60e030f150ce2d6aeeedc023d588a2c2fa5320f20aa4d6c793426969ea5baf93",
-    "scripts/portable.py": "4cf60762ddcf7cf28a3ed92c0c18b301cd82d724d3df2e8a7c74f1ed77b06343",
+    "scripts/portable.py": "c72e527555382db25e74a1c76cefe7634401bbf4a1cda32aecabda96065689cb",
     "scripts/install_common.py": "c3774540d61bcbd6447587441c8e33b2e07ea7f4f5ff3fd84718ddbdc2428742",
     "deployment/install_windows.py": "869a3eeb44ed6050fc1fed83252d38a2b95b6fbe67a459c3b39ad8d2d5905eeb",
     "distribution/bootstrap-windows.ps1": "2bd0d0e75b1e5daf35df9af9d7338986692949793de4e9b4fa4d5aab72271bcc"
   },
-  "planned_url": "https://github.com/JachinLan/jjaitech-memory/releases/download/v1.3.0-rc.3-online.1/jjaitech-memory-windows-1.3.0-rc.3-online.1.zip",
-  "windows_ci": "https://github.com/JachinLan/jjaitech-memory/actions/runs/35207235022",
-  "published_command_test": "https://github.com/JachinLan/jjaitech-memory/actions/runs/35207611586",
-  "published_command_test_result": "passed: exact public command twice, real official Windows CLI, no model account"
+  "planned_url": "https://github.com/JachinLan/jjaitech-memory/releases/download/v1.4.0-rc.1-online.1/jjaitech-memory-windows-1.4.0-rc.1-online.1.zip",
+  "windows_ci": "https://github.com/JachinLan/jjaitech-memory/actions/runs/35325277683"
 }

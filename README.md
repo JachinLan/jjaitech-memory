@@ -1,25 +1,24 @@
-# jjaitech-memory 1.3.0-rc.3
+# jjaitech-memory 1.4.0-rc.1
 
 WorkBuddy 的本地个人/工作记忆插件。每人独立使用 AI-Wiki，明确选择后才分享。当前版本重点修复“读过文件但下次找不到”和长时间反复整理。
 
-## Windows 一条命令安装/升级
+## Windows安装/升级
 
-先安装并登录 WorkBuddy，完成当前任务后退出。打开 **Windows PowerShell** 粘贴：
+完成任务并退出WorkBuddy，在Windows PowerShell执行：
 
 ```powershell
-irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.3.0-rc.3-online.1/install.ps1 | iex
+irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.4.0-rc.1-online.1/install.ps1 | iex
 ```
 
-阅读本地目录权限和当前云端模型处理说明，输入 `YES`。安装器检查 Python、Node、Git Bash 和实际 WorkBuddy CLI；缺少依赖时停止并说明，不修改企业执行策略。ZIP 使用固定 SHA256 验证。成功后重新打开 WorkBuddy；普通聊天即可使用，无需说“记住”。重复运行可升级/修复，已有 Wiki 保留。自定义路径、关闭、回滚和迁移见 [运维手册](docs/OPERATIONS.md)。
+阅读范围说明并输入YES，成功后重启WorkBuddy。依赖Python、Node、Git Bash；安装器检查实际宿主，不绕过企业策略。公开包只包含插件代码。
 
-## 本版验收
+## 本版证据
 
-- Mac 与 Windows：89 项回归测试通过。
-- WorkBuddy 5.5.6 / CLI 2.137.1，当前登录账号真实模型，隔离文件读入、自动结构化写入、原文件移走后跨会话召回通过；本次46.17秒/10.94秒。
-- Mac 桌面 Hy4 preview：同一历史问题由原7分43秒降至本次35秒；这是单次测量，不是每次速度保证。
-- Mac 桌面实际读取长会议记录后，自动一次写入6条 documented 事实；含主任务和整理共约116秒，退出后Raw与完整transcript逐字及哈希一致。最终新会话再次召回约35秒，无冗余Writer。
-- Windows CI 检查使用官方安装包内真实CLI；不含用户账号、模型调用或真实资料。每位同事仍应完成一次本人账号的虚构资料验收。
-- [Windows 回归结果](https://github.com/JachinLan/jjaitech-memory/actions/runs/35207235022)；[同一公开命令连续安装两次：通过](https://github.com/JachinLan/jjaitech-memory/actions/runs/35207611586)。验证实际注册、权限不重复、无关配置保留、本地 MCP 和 Raw 去重。
+- Mac/Windows各102项回归通过：[Windows结果](https://github.com/JachinLan/jjaitech-memory/actions/runs/35325277683)。
+- 当前WorkBuddy账号Hy4：含私人标记的普通偏好成功保存并召回，同名异公司联系人保持独立，职位改变后沿用稳定标题；报价更新、取消试点、共享与恢复通过。
+- 本次三个隔离回合分别约43秒、26秒、15秒。单次测量，不承诺固定延迟；测试限制了无关文件工具以保持隔离。
+- Mac WorkBuddy桌面：当前快速/DeepSeek模型用已确认工作规则自动写入3条事实，约21秒完成，状态页与数据库一致。界面未固定展示Hook回执，请查看本地状态页。
+- 公开安装命令重复执行验证见[安装工作流](https://github.com/JachinLan/jjaitech-memory/actions/workflows/one-command-smoke.yml)。该Windows CI没有员工登录账号或真实客户资料。
 
 ## 数据流
 
@@ -80,3 +79,13 @@ backfill-sources只从该session的已归档Read结果回补来源，不伪造�
 - 安装器不代替Windows真实桌面账号/模型验收，价格、合同、发送状态和公司发布资产仍需核对来源。
 
 官方格式：[Hooks](https://www.codebuddy.ai/docs/cli/hooks)、[插件MCP配置](https://www.codebuddy.ai/docs/cli/plugins-reference)、[MCP直接加载](https://www.codebuddy.ai/docs/cli/mcp)。
+
+
+## 1.4 保存状态与质量校验
+
+- `.state/MEMORY_STATUS.md` 为插件生成的当前保存状态，`.state/receipts/` 保留各会话核验记录；`python memory.py receipt <session-id>` 可重新查询实际数据库/归档状态。不要手工编辑生成的状态页。
+- 区分原文归档、事实已整理、原文归档但未整理、待复核。即使实体未提取私人内容，Raw仍按完整归档约定保存原话；模型不能据此声称已删除或完全没有记录。
+- 对部分明确的中文长期偏好句式增加遗漏检查，拒绝把未覆盖偏好的一轮标为完成；保留一次纠正机会。不是全语言、全事实完整性证明，也不根据关键词直接生成事实。明确不保存、问题及例句不会被该检查强制保存。
+- 联系人提取使用person_name和organization生成稳定姓名+公司标题；职务保留在带日期的事实中。同名异公司不按共同简称合并。旧版带职务标题仅在精确身份匹配并发生后续更新时刷新，保留旧文件路径/实体ID，避免损坏链接。
+- 写入后由PostToolUse立即核验数据库并生成回执。当前5.5.6宿主仍可能要求模型收尾，本插件将其缩短为一句，但不能强制取消正在进行的模型推理或保证每次低延迟。
+- 本次不新增API、网络服务或工具权限，数据库仍是schema3；新整理任务使用contract4，旧待办保留原契约。

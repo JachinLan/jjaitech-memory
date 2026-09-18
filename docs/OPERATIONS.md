@@ -1,6 +1,6 @@
 # 部署、迁移和日常维护手册
 
-适用源码：1.3.0-rc.3；日期：2026-09-17。发布验证结果见 GitHub Release。Windows 自动化安装验收与登录账号后的桌面模型验收分开记录。
+适用源码：1.4.0-rc.1；日期：2026-09-17。发布验证结果见 GitHub Release。Windows 自动化安装验收与登录账号后的桌面模型验收分开记录。
 
 ## 1. 部署前
 
@@ -50,6 +50,7 @@ python3 jjaitech-memory/scripts/install_local.py
 
 ```text
 python <script> doctor
+python <script> receipt <session-id>
 python <script> disable
 python <script> enable
 python <script> model-off
@@ -110,3 +111,5 @@ py -3 -X utf8 $MemoryScript doctor
 - 卸载：先 disable 并退出宿主；禁用插件注册；保留 Wiki。目录白名单仅在确认没有其他依赖时由管理员移除，不能重置整份 settings.json。
 
 删除事实不等于彻底遗忘：Raw、job、快照、导出包和已分发副本仍可能留存。目前没有跨所有副本的自动删除/撤回机制。
+
+保存状态直接查看AI-Wiki/.state/MEMORY_STATUS.md；历史回执在.state/receipts。回执反映提交状态，不证明模型已提取每个事实。Raw和实体记忆的保存范围不同。
