@@ -142,7 +142,7 @@ def export(memory, selected_ids=None):
         data['config.json']=json.dumps(memory.jread(memory.ROOT/'.state/config.json',{}),ensure_ascii=False).encode('utf-8')
         # Outstanding jobs and progress are included for audit/recovery. Restoration
         # does not auto-resume old host sessions or transmit them to a new model.
-        for prefix in ['.state/jobs','.state/sessions','.state/conflicts','.state/chunks']:
+        for prefix in ['.state/jobs','.state/sessions','.state/conflicts','.state/chunks','.state/receipts']:
             for p in (memory.ROOT/prefix).glob('*'):
                 if p.is_file():
                     data['recovery/'+p.relative_to(memory.ROOT/'.state').as_posix()]=memory.safe(p).read_bytes()

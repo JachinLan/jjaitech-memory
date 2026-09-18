@@ -78,6 +78,7 @@ def save_receipt(memory,sid):
 def post_writer(memory,p,state):
     name=p.get('tool_name');args=p.get('tool_input') or {}
     if name=='DeferExecuteTool':name=args.get('toolName');args=args.get('params') or {}
+    if isinstance(name,str):name=name.replace('mcp__jjaitech_memory__','mcp__jjaitech-memory__')
     if name not in ('mcp__jjaitech-memory__write_memory','mcp__jjaitech-memory__defer_memory'):return None
     jid=args.get('job_id');sid=p['session_id']
     if not isinstance(jid,str) or not re.fullmatch('[a-f0-9]{32}',jid):return None

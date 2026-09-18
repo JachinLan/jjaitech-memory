@@ -73,3 +73,16 @@ class QualityTests(unittest.TestCase):
         with m.dbopen() as db:
             rows=db.execute('SELECT * FROM entities').fetchall();self.assertEqual(len(rows),1);updated=dict(rows[0])
         self.assertEqual(updated['id'],old['id']);self.assertEqual(updated['path'],old['path']);self.assertEqual(updated['name'],'陈澈（甲公司）')
+
+    def test_receipts_are_in_private_backup_recovery_records(self):
+        import test_resilience
+        _,job=self.request();m.apply(job,self.plan())
+        exported=test_resilience.p.export(m)
+        import zipfile
+        with zipfile.ZipFile(exported['path']) as z:
+            self.assertTrue(any(x.startswith('recovery/receipts/') for x in z.namelist()))
+
+    def test_underscore_mcp_name_receives_verified_receipt(self):
+        _,job=self.request();m.apply(job,self.plan())
+        r=m.hook('PostToolUse',{**self.p,'tool_name':'mcp__jjaitech_memory__write_memory','tool_input':{'job_id':job}})
+        self.assertIn('3条',r['systemMessage'])

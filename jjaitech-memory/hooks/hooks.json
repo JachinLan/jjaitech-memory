@@ -46,7 +46,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Read|DeferExecuteTool|mcp__jjaitech-memory__write_memory|mcp__jjaitech-memory__defer_memory",
+        "matcher": "Read|DeferExecuteTool|mcp__jjaitech-memory__write_memory|mcp__jjaitech-memory__defer_memory|mcp__jjaitech_memory__write_memory|mcp__jjaitech_memory__defer_memory",
         "hooks": [
           {
             "type": "command",
