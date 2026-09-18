@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
-FILES=['.codebuddy-plugin/plugin.json','.mcp.json','hooks/hooks.json','scripts/memory.py','scripts/sources.py','scripts/memory_mcp.py','scripts/retrieval_guard.py',
+FILES=['.codebuddy-plugin/plugin.json','.mcp.json','hooks/hooks.json','scripts/memory.py','scripts/sources.py','scripts/quality.py','scripts/memory_mcp.py','scripts/retrieval_guard.py',
        'scripts/portable.py','scripts/install_common.py','deployment/install_windows.py',
        'distribution/bootstrap-windows.ps1']
 

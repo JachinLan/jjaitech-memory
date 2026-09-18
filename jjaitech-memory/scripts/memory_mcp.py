@@ -6,7 +6,7 @@ import sys
 import memory
 
 FACT={'type':'object','properties':{'text':{'type':'string','maxLength':2000},'kind':{'type':'string','enum':list(memory.KINDS)},'evidence':{'type':'string','maxLength':2000},'source_id':{'type':'string','maxLength':64},'relations':{'type':'array','items':{'type':'string'},'maxItems':20}},'required':['text','kind','evidence'],'additionalProperties':False}
-ENTITY={'type':'object','properties':{'category':{'type':'string','enum':list(memory.CATEGORIES)},'domain':{'type':'string','enum':['Personal','Work']},'name':{'type':'string','maxLength':160},'aliases':{'type':'array','items':{'type':'string'},'maxItems':20},'facts':{'type':'array','items':FACT,'maxItems':12}},'required':['category','domain','name','facts'],'additionalProperties':False}
+ENTITY={'type':'object','properties':{'person_name':{'type':'string','maxLength':80},'organization':{'type':'string','maxLength':100},'category':{'type':'string','enum':list(memory.CATEGORIES)},'domain':{'type':'string','enum':['Personal','Work']},'name':{'type':'string','maxLength':160},'aliases':{'type':'array','items':{'type':'string'},'maxItems':20},'facts':{'type':'array','items':FACT,'maxItems':12}},'required':['category','domain','name','facts'],'additionalProperties':False}
 TOOLS=[
  {'name':'write_memory','description':'Commit a pending jjaitech-memory job using structured JSON. Only use the job_id from the current Stop hook. Local-only; at most 2 submissions. Never use shell/temp files. Files require kind=documented and source_id.','inputSchema':{'type':'object','properties':{'job_id':{'type':'string'},'entities':{'type':'array','items':ENTITY,'maxItems':12},'outcome':{'type':'string','enum':['facts','no_new_facts','source_only']}},'required':['job_id','entities'],'additionalProperties':False}},
  {'name':'defer_memory','description':'Retain an incomplete writer job for review without pretending it succeeded; stop after this call.','inputSchema':{'type':'object','properties':{'job_id':{'type':'string'},'reason':{'type':'string','maxLength':300}},'required':['job_id','reason'],'additionalProperties':False}},
@@ -15,7 +15,7 @@ TOOLS=[
 
 def dispatch(request):
     method=request.get('method');params=request.get('params') or {}
-    if method=='initialize':return {'protocolVersion':'2024-11-05','capabilities':{'tools':{}},'serverInfo':{'name':'jjaitech-memory','version':'1.3.0-rc.3'}}
+    if method=='initialize':return {'protocolVersion':'2024-11-05','capabilities':{'tools':{}},'serverInfo':{'name':'jjaitech-memory','version':'1.4.0-rc.1'}}
     if method=='ping':return {}
     if method=='tools/list':return {'tools':TOOLS}
     if method=='tools/call':
