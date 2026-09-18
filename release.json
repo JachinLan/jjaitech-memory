@@ -21,5 +21,7 @@
     "distribution/bootstrap-windows.ps1": "2bd0d0e75b1e5daf35df9af9d7338986692949793de4e9b4fa4d5aab72271bcc"
   },
   "planned_url": "https://github.com/JachinLan/jjaitech-memory/releases/download/v1.4.0-rc.1-online.1/jjaitech-memory-windows-1.4.0-rc.1-online.1.zip",
-  "windows_ci": "https://github.com/JachinLan/jjaitech-memory/actions/runs/35325277683"
+  "windows_ci": "https://github.com/JachinLan/jjaitech-memory/actions/runs/35325277683",
+  "published_command_test": "https://github.com/JachinLan/jjaitech-memory/actions/runs/35325746897",
+  "published_command_test_result": "passed: same public command twice with real official Windows CLI"
 }

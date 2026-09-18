@@ -18,7 +18,7 @@ irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.4.0-rc.1-onli
 - 当前WorkBuddy账号Hy4：含私人标记的普通偏好成功保存并召回，同名异公司联系人保持独立，职位改变后沿用稳定标题；报价更新、取消试点、共享与恢复通过。
 - 本次三个隔离回合分别约43秒、26秒、15秒。单次测量，不承诺固定延迟；测试限制了无关文件工具以保持隔离。
 - Mac WorkBuddy桌面：当前快速/DeepSeek模型用已确认工作规则自动写入3条事实，约21秒完成，状态页与数据库一致。界面未固定展示Hook回执，请查看本地状态页。
-- 公开安装命令重复执行验证见[安装工作流](https://github.com/JachinLan/jjaitech-memory/actions/workflows/one-command-smoke.yml)。该Windows CI没有员工登录账号或真实客户资料。
+- 公开安装命令重复执行验证见[已通过的两次安装验收](https://github.com/JachinLan/jjaitech-memory/actions/runs/35325746897)。该Windows CI没有员工登录账号或真实客户资料。
 
 ## 数据流
 
@@ -89,3 +89,5 @@ backfill-sources只从该session的已归档Read结果回补来源，不伪造�
 - 联系人提取使用person_name和organization生成稳定姓名+公司标题；职务保留在带日期的事实中。同名异公司不按共同简称合并。旧版带职务标题仅在精确身份匹配并发生后续更新时刷新，保留旧文件路径/实体ID，避免损坏链接。
 - 写入后由PostToolUse立即核验数据库并生成回执。当前5.5.6宿主仍可能要求模型收尾，本插件将其缩短为一句，但不能强制取消正在进行的模型推理或保证每次低延迟。
 - 本次不新增API、网络服务或工具权限，数据库仍是schema3；新整理任务使用contract4，旧待办保留原契约。
+
+宿主可能同时维护自己的MEMORY.md。独立验证插件请在隔离验收中关闭宿主自动记忆；本插件不自动禁用或删除宿主原生记忆。
