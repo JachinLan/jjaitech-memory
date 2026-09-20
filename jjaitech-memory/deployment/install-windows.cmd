@@ -1,10 +1,9 @@
 @echo off
 setlocal
 chcp 65001 >nul
-echo jjaitech-memory 1.3.0-rc.3 - Windows pilot only
-echo Not approved for company-wide rollout. Read docs/OPERATIONS.md first.
-py -3 -X utf8 "%~dp0install_windows.py" %*
+set "JJAITECH_INSTALL_ROOT=%~dp0..\.."
+powershell.exe -NoProfile -Command "& ([scriptblock]::Create([IO.File]::ReadAllText((Join-Path $env:JJAITECH_INSTALL_ROOT 'jjaitech-memory\distribution\bootstrap-windows.ps1')))) -PackageRoot $env:JJAITECH_INSTALL_ROOT"
 set "JJAITECH_EXIT=%ERRORLEVEL%"
-if not "%JJAITECH_EXIT%"=="0" echo Installation/check failed. Keep the output for review.
+if not "%JJAITECH_EXIT%"=="0" echo Installation failed. Keep this output; do not change company security policies.
 pause
 exit /b %JJAITECH_EXIT%

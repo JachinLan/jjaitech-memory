@@ -165,6 +165,16 @@ def _deploy(source, config, vault, python, run_cli, bash=None, verify=False):
     target=market/'jjaitech-memory'
     backup.mkdir(parents=True)
     for name,value in before.items():write(backup/name,value)
+    cache_copies=[]
+    cache_root=(config/'plugins/cache'/MARKET/'jjaitech-memory').resolve()
+    for row in before['plugins/installed_plugins.json'].get('plugins',{}).get(PLUGIN,[]):
+        if not row.get('installPath'):continue
+        cached=Path(row['installPath'])
+        if cached.exists():
+            if cached.is_symlink() or not cached.resolve().is_relative_to(cache_root):raise ValueError('unexpected installed cache path; manual review required')
+            snapshot=backup/('cache-before-'+str(len(cache_copies)))
+            shutil.copytree(cached,snapshot)
+            cache_copies.append((cached,snapshot))
     # Staging under the same filesystem allows an atomic directory rename.
     market.mkdir(parents=True,exist_ok=True)
     staged=market/('.stage-'+uuid.uuid4().hex)
@@ -251,6 +261,12 @@ def _deploy(source, config, vault, python, run_cli, bash=None, verify=False):
                     if not environment and 'env' not in before['settings.json']:current.pop('env',None)
                     write(config/'settings.json',current)
                 except Exception as error:rollback_errors.append('settings:'+type(error).__name__)
+            # Restore previous runtime cache too: same-version reinstalls may overwrite it.
+            for number,(cached,snapshot) in enumerate(cache_copies):
+                try:
+                    if cached.exists():cached.rename(backup/('failed-cache-'+str(number)))
+                    shutil.copytree(snapshot,cached)
+                except Exception as error:rollback_errors.append('cache:'+type(error).__name__)
             # Keep the failed candidate as evidence rather than deleting it.
             try:
                 if target.exists():target.rename(backup/'failed-plugin')

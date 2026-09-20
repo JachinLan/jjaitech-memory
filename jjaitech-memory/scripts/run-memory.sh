@@ -2,6 +2,8 @@
 # Local stdio launcher; no download, no shell eval, no stdout except selected script.
 set -eu
 jj_root=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+jj_native_root=$jj_root
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) jj_native_root=$(cygpath -m "$jj_root") ;; esac
 jj_python=''
 jj_probe() {
   case "$1" in *WindowsApps*|/usr/bin/python3|'') return 1 ;; esac
@@ -35,6 +37,6 @@ if [ -z "$jj_python" ]; then
   exit 1
 fi
 case "${1:-}" in
-  mcp) shift; exec "$jj_python" -X utf8 "$jj_root/scripts/memory_mcp.py" "$@" ;;
-  *) exec "$jj_python" -X utf8 "$jj_root/scripts/memory.py" "$@" ;;
+  mcp) shift; exec "$jj_python" -X utf8 "$jj_native_root/scripts/memory_mcp.py" "$@" ;;
+  *) exec "$jj_python" -X utf8 "$jj_native_root/scripts/memory.py" "$@" ;;
 esac

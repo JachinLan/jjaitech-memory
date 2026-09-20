@@ -27,6 +27,18 @@ class CrossPlatformInstallerTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):i.deploy(self.source,self.config,self.vault,sys.executable,lambda args:None,verify=True)
         self.assertEqual(i.read(self.config/'settings.json'),self.original)
 
+    def test_failed_same_version_reinstall_restores_previous_runtime_cache(self):
+        cache=self.config/'plugins/cache/jjaitech-local/jjaitech-memory/1.2.0-rc.1';cache.mkdir(parents=True);(cache/'runtime.txt').write_text('old-good')
+        i.write(self.config/'plugins/installed_plugins.json',{'plugins':{i.PLUGIN:[{'version':'1.2.0-rc.1','installPath':str(cache)}]}})
+        def fail(args):
+            if args[:2]==['plugin','update']:
+                (cache/'runtime.txt').write_text('new-broken')
+                raise RuntimeError('same-version update failed')
+        with self.assertRaises(RuntimeError):i.deploy(self.source,self.config,self.vault,sys.executable,fail)
+        self.assertEqual((cache/'runtime.txt').read_text(),'old-good')
+        copies=list((self.config/'jjaitech-memory-backups').glob('*/failed-cache-0/runtime.txt'))
+        self.assertEqual(len(copies),1);self.assertEqual(copies[0].read_text(),'new-broken')
+
 class LauncherTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory(prefix='jj-install-')
