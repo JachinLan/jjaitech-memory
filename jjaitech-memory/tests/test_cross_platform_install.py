@@ -39,6 +39,11 @@ class CrossPlatformInstallerTests(unittest.TestCase):
         copies=list((self.config/'jjaitech-memory-backups').glob('*/failed-cache-0/runtime.txt'))
         self.assertEqual(len(copies),1);self.assertEqual(copies[0].read_text(),'new-broken')
 
+    def test_old_installer_cannot_downgrade_newer_plugin(self):
+        i.write(self.config/'plugins/installed_plugins.json',{'plugins':{i.PLUGIN:[{'version':'9.0.0'}]}})
+        with self.assertRaisesRegex(ValueError,'downgrade'):i.deploy(self.source,self.config,self.vault,sys.executable,lambda args:None)
+        self.assertEqual(i.read(self.config/'settings.json'),self.original)
+
 class LauncherTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory(prefix='jj-install-')

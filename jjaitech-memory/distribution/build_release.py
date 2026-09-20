@@ -10,7 +10,7 @@ import zipfile
 ROOT=Path(__file__).resolve().parents[1]
 FILES=['.codebuddy-plugin/plugin.json','.mcp.json','hooks/hooks.json','scripts/memory.py','scripts/sources.py','scripts/quality.py','scripts/memory_mcp.py','scripts/retrieval_guard.py',
        'scripts/portable.py','scripts/install_common.py','scripts/install_local.py','scripts/run-memory.sh','deployment/install_windows.py','deployment/install-windows.cmd',
-       'distribution/bootstrap-windows.ps1','distribution/bootstrap-macos.sh']
+       'distribution/bootstrap-windows.ps1','distribution/bootstrap-macos.sh','README.md','docs/INSTALLATION.md','docs/OPERATIONS.md']
 
 
 def check_url(url):

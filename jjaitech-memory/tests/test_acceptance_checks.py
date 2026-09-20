@@ -14,3 +14,7 @@ class AcceptanceCheckTests(unittest.TestCase):
 
     def test_decision_only_is_allowed(self):
         self.assertFalse(unsupported_execution_status(['已决定先做两周试点']))
+
+    def test_not_stated_is_unknown_not_positive_execution(self):
+        self.assertFalse(unsupported_execution_status(['已决定先做两周试点，未说明已开始或完成']))
+        self.assertTrue(unsupported_execution_status(['未说明已开始，但已完成验收']))

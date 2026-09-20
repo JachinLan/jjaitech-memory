@@ -12,7 +12,7 @@ import sqlite3
 import uuid
 from acceptance_checks import unsupported_execution_status
 
-plugin = Path(__file__).resolve().parents[1]
+plugin = Path(os.environ.get('JJAITECH_TEST_PLUGIN', str(Path(__file__).resolve().parents[1])))
 cli = Path('/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy')
 test = Path(sys.argv[1]) if len(sys.argv)>1 else Path(tempfile.mkdtemp(prefix='jjaitech-memory-test-'))
 test.mkdir(parents=True, exist_ok=True)
@@ -31,9 +31,13 @@ subprocess.run([sys.executable,str(plugin/'scripts/memory.py'),'init'],env=env,c
 cfg = test/'wiki/.state/config.json'
 settings = json.loads(cfg.read_text());settings['synthetic_test_vault']=True
 cfg.write_text(json.dumps(settings))
+mcp_config=json.loads((plugin/'.mcp.json').read_text())
+for server in mcp_config['mcpServers'].values():
+    server['args']=[x.replace('${CODEBUDDY_PLUGIN_ROOT}',str(plugin)) for x in server.get('args',[])]
+    server['defer_loading']=False
 common = [str(cli),'--plugin-dir',str(plugin), '--allowedTools','Read','mcp__jjaitech-memory__write_memory','mcp__jjaitech-memory__defer_memory','mcp__jjaitech-memory__search_memory',
           '--settings','{"enabledPlugins":{"jjaitech-memory@jjaitech-local":false}}',
-          '--strict-mcp-config','--mcp-config',json.dumps({'mcpServers':{'jjaitech-memory':{'command':sys.executable,'args':['-X','utf8',str(plugin/'scripts/memory_mcp.py')],'defer_loading':False}}}), '--max-turns','8',
+          '--strict-mcp-config','--mcp-config',json.dumps(mcp_config), '--max-turns','8',
           '--output-format','stream-json','--verbose']
 prompts = {
     'writer':f'我叫{worker}，长期不喝咖啡，喜欢无糖桂花茶。我写工作邮件长期习惯先列结论再列行动项。我负责客户云帆验收公司-{nonce}，联系人验收联系人-{nonce}，项目{project}采用验收助手产品。我们已决定先做两周试点。当前报价人民币{amount}元，不含税，有效至2026年11月30日。请给一句简短跟进建议，不要假定试点已经开始或完成。',
@@ -75,6 +79,8 @@ checks['raw_exact'] = len(raw_matches)==2 and all(raw_matches)
 events = [json.loads(x) for x in (wiki/'.state/events.jsonl').read_text().splitlines()]
 checks['bounded_writers'] = sum(x['event']=='writer_requested' and x['session']==results['writer']['session_id'] for x in events)==1 and sum(x['event']=='writer_requested' and x['session']==results['recall']['session_id'] for x in events)==0
 with sqlite3.connect(wiki/'.state/memory.sqlite3') as db:
+    # Domain is the sharing/privacy boundary; Experience is also a valid Work category.
+    checks['work_updated']=bool(db.execute("SELECT 1 FROM facts f JOIN entities e ON e.id=f.entity_id WHERE e.domain='Work' AND f.text LIKE '%行动项%'").fetchone())
     project_facts=[r[0] for r in db.execute('SELECT f.text FROM facts f JOIN entities e ON e.id=f.entity_id WHERE e.name=?',(project,))]
 # A saved decision must not acquire an unsupported negative or positive execution
 # status from the assistant's answer. This fixture check is not a semantic verifier.

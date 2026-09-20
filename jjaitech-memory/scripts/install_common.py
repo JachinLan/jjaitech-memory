@@ -150,6 +150,13 @@ def deploy(source, config, vault, python, run_cli, bash=None, verify=False):
     with installation_lock(config):return _deploy(source,config,vault,python,run_cli,bash,verify)
 
 
+def version_key(value):
+    match=re.fullmatch(r'(\d+)\.(\d+)\.(\d+)(?:-rc\.?(\d+))?',str(value))
+    if not match:raise ValueError('Unknown plugin version format; refusing automatic replacement')
+    major,minor,patch,rc=match.groups()
+    return (int(major),int(minor),int(patch),1 if rc is None else 0,int(rc or 0))
+
+
 def _deploy(source, config, vault, python, run_cli, bash=None, verify=False):
     """run_cli(argv) must raise on failure. Validate before granting any permission."""
     source,config,vault=Path(source).absolute(),Path(config).absolute(),Path(vault).absolute()
@@ -158,6 +165,10 @@ def _deploy(source, config, vault, python, run_cli, bash=None, verify=False):
     for p in source.rglob('*'):
         if p.is_symlink():raise ValueError('plugin package symlinks forbidden')
     before={name:read(config/name,{}) for name in ['settings.json','plugins/installed_plugins.json','plugins/known_marketplaces.json']}
+    candidate_version=read(source/'.codebuddy-plugin/plugin.json')['version']
+    for row in before['plugins/installed_plugins.json'].get('plugins',{}).get(PLUGIN,[]):
+        if row.get('version') and version_key(row['version'])>version_key(candidate_version):
+            raise ValueError('A newer plugin is installed; automatic downgrade is refused. Use the current release or a reviewed backup restore.')
     candidate_settings,permission_added=with_vault_permission(before['settings.json'],vault)
     stamp=datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
     backup=config/'jjaitech-memory-backups'/stamp
