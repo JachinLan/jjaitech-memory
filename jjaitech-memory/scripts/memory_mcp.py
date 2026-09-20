@@ -15,7 +15,7 @@ TOOLS=[
 
 def dispatch(request):
     method=request.get('method');params=request.get('params') or {}
-    if method=='initialize':return {'protocolVersion':'2024-11-05','capabilities':{'tools':{}},'serverInfo':{'name':'jjaitech-memory','version':'1.4.0-rc.1'}}
+    if method=='initialize':return {'protocolVersion':'2024-11-05','capabilities':{'tools':{}},'serverInfo':{'name':'jjaitech-memory','version':'1.4.1-rc.1'}}
     if method=='ping':return {}
     if method=='tools/list':return {'tools':TOOLS}
     if method=='tools/call':

@@ -15,7 +15,7 @@ $Config = Join-Path $env:USERPROFILE '.workbuddy'
 if (!(Test-Path -LiteralPath $Config -PathType Container)) {
     throw 'Open WorkBuddy and sign in with your own account first, then run this command again.'
 }
-Write-Host 'JJ AI TECH memory - Windows pilot (not yet native-Windows certified).'
+Write-Host 'JJ AI TECH memory - Windows pilot installer (employee desktop acceptance still required).'
 Write-Host 'Missing Python, Node.js or Git may be installed through Microsoft WinGet.'
 Write-Host 'Your current WorkBuddy model processes conversation/retrieved text; files stay local.'
 Write-Host 'WorkBuddy tools will be allowed to write ONLY your AI-Wiki folder in addition to existing permissions.'
@@ -41,6 +41,10 @@ function Install-Dependency([string]$Id) {
 }
 function Find-Python {
     $candidates = @()
+    $bundled = Join-Path $Config 'binaries\python\versions'
+    if (Test-Path -LiteralPath $bundled) {
+        $candidates += @(Get-ChildItem -LiteralPath $bundled -Filter python.exe -Recurse -File | Select-Object -ExpandProperty FullName)
+    }
     foreach ($name in @('py.exe','python.exe','python3.exe')) {
         $cmd = Get-Command $name -ErrorAction SilentlyContinue
         if ($cmd) { $candidates += $cmd.Source }
@@ -50,6 +54,7 @@ function Find-Python {
         $candidates += @(Get-ChildItem -LiteralPath $base -Filter 'python.exe' -Recurse -File | Select-Object -ExpandProperty FullName)
     }
     foreach ($candidate in ($candidates | Select-Object -Unique)) {
+        if ($candidate -like '*\Microsoft\WindowsApps\*') { continue }
         $launcherArgs = @()
         if ([IO.Path]::GetFileName($candidate) -eq 'py.exe') { $launcherArgs = @('-3') }
         $probe = "import sys,sqlite3; assert sys.version_info>=(3,9); c=sqlite3.connect(':memory:'); c.execute('CREATE VIRTUAL TABLE t USING fts5(x)'); print(sys.executable)"
@@ -65,12 +70,12 @@ function Find-Python {
 }
 function Find-Node {
     $candidates = @()
-    $cmd = Get-Command node.exe -ErrorAction SilentlyContinue
-    if ($cmd) { $candidates += $cmd.Source }
-    $bundled = Join-Path $Config 'binaries\node\versions'
+        $bundled = Join-Path $Config 'binaries\node\versions'
     if (Test-Path -LiteralPath $bundled) {
         $candidates += @(Get-ChildItem -LiteralPath $bundled -Filter node.exe -Recurse -File | Select-Object -ExpandProperty FullName)
     }
+    $cmd = Get-Command node.exe -ErrorAction SilentlyContinue
+    if ($cmd) { $candidates += $cmd.Source }
     foreach ($candidate in ($candidates | Select-Object -Unique)) {
         try {
             $value = (& $candidate --version 2>$null | Out-String).Trim().TrimStart('v')
@@ -81,6 +86,13 @@ function Find-Node {
 }
 function Find-Bash {
     $candidates = @($env:CODEBUDDY_CODE_GIT_BASH_PATH)
+    $settingsPath = Join-Path $Config 'settings.json'
+    if (Test-Path -LiteralPath $settingsPath) {
+        $settings = Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ($settings.PSObject.Properties.Name -contains 'env') {
+            if ($settings.env -and ($settings.env.PSObject.Properties.Name -contains 'CODEBUDDY_CODE_GIT_BASH_PATH')) { $candidates += $settings.env.CODEBUDDY_CODE_GIT_BASH_PATH }
+        }
+    }
     foreach ($root in @($env:ProgramFiles,${env:ProgramFiles(x86)},$env:LOCALAPPDATA)) {
         if ($root) {
             $candidates += (Join-Path $root 'Git\bin\bash.exe')

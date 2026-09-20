@@ -1,4 +1,4 @@
-name: Windows checks
+name: Cross-platform checks
 on:
   push:
   workflow_dispatch:
@@ -6,7 +6,11 @@ permissions:
   contents: read
 jobs:
   windows:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15, macos-15-intel]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 12
     env:
       PYTHONUTF8: '1'
@@ -16,6 +20,7 @@ jobs:
         with:
           python-version: '3.13'
       - name: Parse PowerShell without executing installation
+        if: runner.os == 'Windows'
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
@@ -26,6 +31,7 @@ jobs:
             if ($parseErrors.Count -gt 0) { $parseErrors | Format-List; throw "PowerShell parse failed: $file" }
           }
       - name: Probe existing Windows runtimes without installing software
+        if: runner.os == 'Windows'
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
@@ -46,5 +52,11 @@ jobs:
           if (!$python -or !$node -or !$bash) { throw "Runtime discovery failed: Python=$python Node=$node Bash=$bash" }
           Write-Host "Python=$python Node=$node Bash=$bash"
       - name: Run isolated core and installer tests
-        shell: powershell
-        run: python -m unittest discover -s jjaitech-memory/tests -v
+        shell: bash
+        run: python -X utf8 -m unittest discover -s jjaitech-memory/tests -v
+      - name: Parse Mac launch scripts
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          bash -n jjaitech-memory/distribution/bootstrap-macos.sh
+          bash -n jjaitech-memory/scripts/run-memory.sh

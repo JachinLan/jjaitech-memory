@@ -30,8 +30,8 @@ def main():
     app=apps[0];cli=app/'Contents/Resources/app.asar.unpacked/cli/bin/codebuddy'
     config=args.config_dir.expanduser().absolute()
     if not config.is_dir():raise RuntimeError('Open WorkBuddy and log in first.')
-    nodes=[Path(shutil.which('node'))] if shutil.which('node') else []
-    nodes+=list((config/'binaries/node/versions').glob('*/bin/node'))
+    nodes=list((config/'binaries/node/versions').glob('*/bin/node'))
+    if shutil.which('node'):nodes.append(Path(shutil.which('node')))
     node=None
     for candidate in nodes:
         try:
@@ -46,14 +46,15 @@ def main():
     run_cli(['--version'])
     source=Path(__file__).resolve().parents[1]
     if args.check:
+        print(json.dumps({'python':sys.executable,'node':str(node),'cli':str(cli),'config':str(config)},ensure_ascii=False))
         run_cli(['plugin','validate',str(source)]);return
     processes=subprocess.check_output(['ps','-u',str(os.getuid()),'-o','command='],text=True)
-    executable=str(app/'Contents/MacOS/Electron')
+    executable=str(app/'Contents/MacOS'/plistlib.loads((app/'Contents/Info.plist').read_bytes()).get('CFBundleExecutable','Electron'))
     if any(line.strip().startswith(executable) or
-           (Path(line.strip().split(' ')[0]).name in ('node','codebuddy','cbc') and str(cli.parent.parent) in line)
+           str(cli) in line
            for line in processes.splitlines() if line.strip()):
         raise RuntimeError('Finish pending work and quit WorkBuddy / its CodeBuddy sessions before upgrading; do not mix old and new Hooks on one vault.')
-    result=deploy(source,config,Path.home()/'AI-Wiki',sys.executable,run_cli)
+    result=deploy(source,config,Path.home()/'AI-Wiki',sys.executable,run_cli,verify=True)
     bin_dir=Path.home()/'.local/bin';bin_dir.mkdir(parents=True,exist_ok=True)
     wrapper=bin_dir/'jjaitech-codebuddy'
     wrapper.write_text('#!/bin/sh\nexport CODEBUDDY_CONFIG_DIR='+shlex.quote(str(config))+'\nexport DISABLE_TELEMETRY=1\nexport DISABLE_GALILEO=1\nexec '+shlex.quote(str(node))+' '+shlex.quote(str(cli))+' "$@"\n',encoding='utf-8')

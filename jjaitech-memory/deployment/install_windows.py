@@ -58,10 +58,9 @@ def discover_cli(explicit=None):
 
 def find_node(config):
     nodes = []
-    if shutil.which('node'):
-        nodes.append(Path(shutil.which('node')))
     nodes += list((config/'binaries/node/versions').glob('*/node.exe'))
     nodes += list((config/'binaries/node/versions').glob('*/bin/node.exe'))
+    if shutil.which('node'):nodes.append(Path(shutil.which('node')))
     for node in nodes:
         try:
             out=subprocess.check_output([str(node),'--version'],text=True,timeout=10).strip()
@@ -73,8 +72,11 @@ def find_node(config):
     raise RuntimeError('Node.js 18.20.8+ not found. Install official Node.js or supply its directory in PATH.')
 
 
-def find_bash():
+def find_bash(config=None):
     candidates = [os.environ.get('CODEBUDDY_CODE_GIT_BASH_PATH')]
+    if config and (config/'settings.json').exists():
+        settings=json.loads((config/'settings.json').read_text(encoding='utf-8-sig'))
+        candidates.append(settings.get('env',{}).get('CODEBUDDY_CODE_GIT_BASH_PATH'))
     for key in ['ProgramFiles','ProgramFiles(x86)','LOCALAPPDATA']:
         base=os.environ.get(key)
         if base:
@@ -84,8 +86,10 @@ def find_bash():
         candidates += [str(Path(git).parent.parent/'bin/bash.exe')]
     for candidate in candidates:
         if candidate and Path(candidate).is_file():
-            subprocess.run([candidate,'--version'],check=True,capture_output=True,timeout=10)
-            return Path(candidate)
+            try:
+                subprocess.run([candidate,'--version'],check=True,capture_output=True,timeout=10)
+                return Path(candidate)
+            except (OSError,subprocess.SubprocessError):continue
     raise RuntimeError('Git for Windows / Git Bash not found. Install it from git-scm.com first.')
 
 
@@ -115,7 +119,7 @@ def main():
         raise RuntimeError('WorkBuddy config not found; open WorkBuddy and log in to your own account first.')
     cli=discover_cli(args.cli)
     node,node_version=find_node(config)
-    bash=find_bash()
+    bash=find_bash(config)
     env=dict(os.environ,CODEBUDDY_CONFIG_DIR=str(config),DISABLE_TELEMETRY='1',DISABLE_GALILEO='1',
              CODEBUDDY_CODE_GIT_BASH_PATH=str(bash),
              PATH=str(node.parent)+os.pathsep+str(Path(sys.executable).parent)+os.pathsep+os.environ.get('PATH',''))
@@ -127,7 +131,10 @@ def main():
     active=subprocess.run(['powershell.exe','-NoProfile','-Command',
         "Get-Process WorkBuddy -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id"],
         capture_output=True,text=True,timeout=15)
-    if active.stdout.strip():
+    cli_literal="'"+str(cli).replace("'","''")+"'"
+    sessions=subprocess.run(['powershell.exe','-NoProfile','-Command',
+        "$ErrorActionPreference='Stop'; $jjCli="+cli_literal+"; Get-CimInstance Win32_Process | Where-Object { $_.Name -in @('node.exe','codebuddy.exe','cbc.exe') -and $_.CommandLine -and $_.CommandLine.Contains($jjCli) } | Select-Object -ExpandProperty ProcessId"],capture_output=True,text=True,timeout=20,check=True)
+    if active.stdout.strip() or sessions.stdout.strip():
         raise RuntimeError('Finish pending tasks and quit WorkBuddy before installation. Re-run with --cli if needed; do not mix old and new Hooks on one vault.')
     print('This is a Windows pilot build, not yet tested on a physical Windows computer.')
     print('Installs only local plugin code. Creates YOUR ~/AI-Wiki, permits ALL WorkBuddy tools to write that vault,')
@@ -141,9 +148,9 @@ def main():
     from install_common import deploy
     def run_cli(arguments):
         subprocess.run([str(node),str(cli),*arguments],env=env,check=True,timeout=180)
-    result=deploy(source,config,Path.home()/'AI-Wiki',sys.executable,run_cli)
+    result=deploy(source,config,Path.home()/'AI-Wiki',sys.executable,run_cli,bash=bash,verify=True)
     print(json.dumps(result,ensure_ascii=False,indent=2))
-    print('Registration completed. Restart WorkBuddy; hooks initialize the vault. Complete Windows acceptance before wider rollout.')
+    print('Registration verified; local Python/runtime checks passed. Restart WorkBuddy; hooks initialize the vault. Complete Windows acceptance before wider rollout.')
 
 
 if __name__=='__main__':

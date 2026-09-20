@@ -9,6 +9,8 @@ import shutil
 import sqlite3
 import tempfile
 import uuid
+import re
+import subprocess
 
 PLUGIN='jjaitech-memory@jjaitech-local'
 MARKET='jjaitech-local'
@@ -91,7 +93,62 @@ def restore_owned_config(config, before, vault, permission_added, tool_rules_add
         write(target,latest)
 
 
-def deploy(source, config, vault, python, run_cli):
+@contextlib.contextmanager
+def installation_lock(config):
+    config=Path(config)
+    if config.is_symlink() or (config/'jjaitech-memory-install.lock').is_symlink():raise ValueError('installation lock/config symlink forbidden')
+    config.mkdir(parents=True,exist_ok=True)
+    with (config/'jjaitech-memory-install.lock').open('a+b') as f:
+        f.seek(0,2)
+        if f.tell()==0:f.write(b'0');f.flush()
+        f.seek(0)
+        try:
+            if os.name=='nt':
+                import msvcrt
+                msvcrt.locking(f.fileno(),msvcrt.LK_NBLCK,1)
+            else:
+                import fcntl
+                fcntl.flock(f,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except OSError:raise RuntimeError('Another jjaitech-memory installer is active; wait for it to finish.')
+        try:yield
+        finally:
+            f.seek(0)
+            if os.name=='nt':msvcrt.locking(f.fileno(),msvcrt.LK_UNLCK,1)
+            else:fcntl.flock(f,fcntl.LOCK_UN)
+
+
+def verify_registration(config,version):
+    settings=read(Path(config)/'settings.json',{})
+    if settings.get('enabledPlugins',{}).get(PLUGIN) is not True:raise RuntimeError('Plugin not enabled after CLI registration')
+    rows=read(Path(config)/'plugins/installed_plugins.json',{}).get('plugins',{}).get(PLUGIN,[])
+    if not rows or not any(r.get('version')==version and Path(r.get('installPath','')).is_dir() for r in rows):raise RuntimeError('Installed registry/version/path did not verify')
+    return 'registered-and-enabled'
+
+
+def verify_local_runtime(target,config):
+    """No account/model requests. Exercise installed launcher, stdio MCP and Raw."""
+    target=Path(target);spec=read(target/'.mcp.json')['mcpServers']['jjaitech-memory']
+    args=[spec['command'],*[x.replace('${CODEBUDDY_PLUGIN_ROOT}',str(target)) for x in spec['args']]]
+    with tempfile.TemporaryDirectory(prefix='jjaitech-install-check-') as folder:
+        root=Path(folder);env=dict(os.environ,JJAITECH_WIKI_ROOT=str(root/'wiki'),CODEBUDDY_CONFIG_DIR=str(config))
+        messages='\n'.join(json.dumps({'jsonrpc':'2.0','id':i,'method':method}) for i,method in enumerate(['initialize','tools/list'],1))+'\n'
+        result=subprocess.run(args,input=messages,text=True,encoding='utf-8',env=env,capture_output=True,check=True,timeout=30)
+        replies=[json.loads(x) for x in result.stdout.splitlines()]
+        if {t['name'] for t in replies[-1]['result']['tools']}!={'write_memory','defer_memory','search_memory'}:raise RuntimeError('Local MCP check failed')
+        transcript=root/'session.jsonl';transcript.write_text(json.dumps({'role':'user','content':'Synthetic installation check.'})+'\n',encoding='utf-8')
+        hook=[args[0],args[1],'hook','SessionEnd']
+        payload=json.dumps({'session_id':'installer-synthetic','transcript_path':str(transcript)})
+        for _ in range(2):subprocess.run(hook,input=payload,text=True,encoding='utf-8',env=env,capture_output=True,check=True,timeout=30)
+        files=list((root/'wiki/Raw').glob('*.jsonl'))
+        if len(files)!=1 or files[0].read_bytes()!=transcript.read_bytes():raise RuntimeError('Raw hook/dedup check failed')
+    return 'local-mcp-and-raw-passed; desktop-model-not-tested'
+
+
+def deploy(source, config, vault, python, run_cli, bash=None, verify=False):
+    with installation_lock(config):return _deploy(source,config,vault,python,run_cli,bash,verify)
+
+
+def _deploy(source, config, vault, python, run_cli, bash=None, verify=False):
     """run_cli(argv) must raise on failure. Validate before granting any permission."""
     source,config,vault=Path(source).absolute(),Path(config).absolute(),Path(vault).absolute()
     if any(p.is_symlink() for p in [source,config,vault]):raise ValueError('installation symlinks require manual review')
@@ -121,12 +178,27 @@ def deploy(source, config, vault, python, run_cli):
     if mcp:
         mcp['mcpServers']['jjaitech-memory']['command']=str(Path(python))
         write(staged/'.mcp.json',mcp)
+    if (staged/'scripts/run-memory.sh').exists():
+        shell=str(bash) if bash else '/bin/bash'
+        if any('\n' in str(v) or '\r' in str(v) for v in (python,config,shell)):raise ValueError('runtime paths cannot contain line breaks')
+        (staged/'.runtime-python-paths').write_text(Path(python).as_posix()+'\n',encoding='utf-8')
+        (staged/'.runtime-config-root').write_text(config.as_posix()+'\n',encoding='utf-8')
+        for event,groups in hooks['hooks'].items():
+            for group in groups:
+                for hook in group['hooks']:
+                    hook['command']=shlex.quote(Path(shell).as_posix())+' "${CODEBUDDY_PLUGIN_ROOT}/scripts/run-memory.sh" hook '+event
+        write(staged/'hooks/hooks.json',hooks)
+        if mcp:
+            mcp['mcpServers']['jjaitech-memory']['command']=shell
+            mcp['mcpServers']['jjaitech-memory']['args']=['${CODEBUDDY_PLUGIN_ROOT}/scripts/run-memory.sh','mcp']
+            write(staged/'.mcp.json',mcp)
     old_manifest=read(market/'.codebuddy-plugin/marketplace.json',None)
     old_target=backup/'previous-plugin'
     receipt={'status':'staged','version':read(staged/'.codebuddy-plugin/plugin.json')['version'],
              'vault':str(vault),'permission_added':permission_added,'backup':str(backup)}
     write(backup/'receipt.json',receipt)
     tool_rules_added=[]
+    env_changes={}
     installed=False
     old_moved=False
     try:
@@ -144,17 +216,38 @@ def deploy(source, config, vault, python, run_cli):
         # Re-read settings after validation to preserve unrelated concurrent changes.
         fresh,permission_added=with_vault_permission(read(config/'settings.json',{}),vault)
         if mcp:fresh,tool_rules_added=with_memory_tool_permissions(fresh)
+        if bash:
+            runtime_env=fresh.setdefault('env',{})
+            if not isinstance(runtime_env,dict):raise ValueError('settings.env must be an object')
+            key='CODEBUDDY_CODE_GIT_BASH_PATH'
+            desired=str(bash)
+            if runtime_env.get(key)!=desired:
+                env_changes[key]={'existed':key in runtime_env,'before':runtime_env.get(key),'installed':desired}
+                runtime_env[key]=desired
         write(config/'settings.json',fresh)
         for args in [['plugin','marketplace','add',str(market)],['plugin','install',PLUGIN],['plugin','update',PLUGIN]]:
             run_cli(args)
-        receipt.update(status='installed',permission_added=permission_added,added_tool_rules=tool_rules_added)
+        if verify:
+            receipt['verification']=verify_registration(config,receipt['version'])
+            rows=read(config/'plugins/installed_plugins.json',{}).get('plugins',{}).get(PLUGIN,[])
+            installed_path=next(Path(r['installPath']) for r in rows if r.get('version')==receipt['version'])
+            receipt['runtime_check']=verify_local_runtime(installed_path,config)
+        receipt.update(status='installed',permission_added=permission_added,added_tool_rules=tool_rules_added,env_changes=env_changes)
         write(backup/'receipt.json',receipt)
         return receipt
     except Exception as exc:
         rollback_errors=[]
         if installed or old_moved:
             if installed:
-                try:restore_owned_config(config,before,vault,permission_added,tool_rules_added)
+                try:
+                    restore_owned_config(config,before,vault,permission_added,tool_rules_added)
+                    current=read(config/'settings.json',{});environment=current.get('env',{})
+                    for key,change in env_changes.items():
+                        if environment.get(key)==change['installed']:
+                            if change['existed']:environment[key]=change['before']
+                            else:environment.pop(key,None)
+                    if not environment and 'env' not in before['settings.json']:current.pop('env',None)
+                    write(config/'settings.json',current)
                 except Exception as error:rollback_errors.append('settings:'+type(error).__name__)
             # Keep the failed candidate as evidence rather than deleting it.
             try:
