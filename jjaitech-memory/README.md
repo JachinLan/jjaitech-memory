@@ -1,4 +1,4 @@
-# jjaitech-memory 1.4.1-rc.1
+# jjaitech-memory 1.4.1-rc.2
 
 WorkBuddy 的本地个人/工作记忆插件。每人独立使用 AI-Wiki，明确选择后才分享。当前版本重点修复“读过文件但下次找不到”和长时间反复整理。
 

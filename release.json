@@ -1,31 +1,31 @@
 {
-  "plugin_version": "1.4.1-rc.1",
+  "plugin_version": "1.4.1-rc.2",
   "distribution_revision": 1,
-  "asset": "jjaitech-memory-1.4.1-rc.1-online.1.zip",
-  "sha256": "d5339dc66312925444becaa9dadab7a03083fc5286ad9a2820b1d8fad10a3edb",
-  "windows_native_test": "Core and launcher Windows CI passed; final exact public command pending",
-  "status": "pilot-release",
+  "asset": "jjaitech-memory-1.4.1-rc.2-online.1.zip",
+  "sha256": "4b73e58d13dcbe2abacee8c2f975f1fc9001851c6c86d9da82e9bc44a48e1969",
+  "windows_native_test": "NOT RUN",
+  "status": "pilot-unpublished",
   "wiki_data_included": false,
   "source_files": {
-    ".codebuddy-plugin/plugin.json": "074851b71e98be0ab394fdbcdeb8d951d1459f7b200b755f86bd5e8bd56da106",
+    ".codebuddy-plugin/plugin.json": "bfd1520664bdba025b8a93e3babd53a286be8fb71460232fd66be6148ea2174b",
     ".mcp.json": "b2ebdaca4fdd5bbc072f36f8df2a6b1e0fa176786ec2e064f9afdf842c8f61ab",
     "hooks/hooks.json": "25a32f0c411427e4d7417d3637aa31353fe225108d386cf54b01b61445b40c14",
     "scripts/memory.py": "6eaace180dd153c94f859f8592a0978ab8bdca51a2f7f9cacb72c2a321e95ea7",
     "scripts/sources.py": "12fe0ff1c7cb2bfea1204ad5a2be8d3b5c4e02296e4b1b77b062b5b5ae3acba1",
     "scripts/quality.py": "834cf991211602e4c543dec6a0ea7e1e93f8897c52b808f11baf630b71b954e2",
-    "scripts/memory_mcp.py": "cb08fcf28777f8c4c4c107753ca3c6478b9de13dd14940c61247231f24b651f8",
+    "scripts/memory_mcp.py": "c0300c7f309a8120323378473c488eb930cbf8994c4f1590ce55ca60cf581ddc",
     "scripts/retrieval_guard.py": "60e030f150ce2d6aeeedc023d588a2c2fa5320f20aa4d6c793426969ea5baf93",
     "scripts/portable.py": "c72e527555382db25e74a1c76cefe7634401bbf4a1cda32aecabda96065689cb",
     "scripts/install_common.py": "27e042b81f8b4d843a3d637dee51a94f67376cdbd361fb23ebe230fbe5e26b11",
-    "scripts/install_local.py": "63ae7816057c466c2a55fc5045d9f5193593d7fb0451b867b1374d1aedec2184",
+    "scripts/install_local.py": "be04c900b309c365cb59559ee093f18f68cf9c1a16325551b87239aa57d0c5ce",
     "scripts/run-memory.sh": "5d4b09a98ada83c0ccb2d10590e213506b29342eddde360c451144680205b72c",
     "deployment/install_windows.py": "96ceaef536e8d4d07e0ab26a9ce80ccbcd9a58f583b9a36598e33bd33e88f26f",
     "deployment/install-windows.cmd": "11df628c49f5a5f27d26e109fb90135ba91339a27a78b525e43438117c8cf9e7",
     "distribution/bootstrap-windows.ps1": "e3fefd6232dfefcbb5857f6c443a9c1bfc4aa6ed58de0da74994497293b88e48",
     "distribution/bootstrap-macos.sh": "b691f311b5aa6eb702d778798c2d18457346a3ad6c80532bb6da6e20b6fa1b35",
-    "README.md": "63680e44aa1ccd327ff07897373805bde99279fb40e0dc690ff1cba464e2ba31",
-    "docs/INSTALLATION.md": "05f3fbbd7f60d45c25cad8d9e6d7124998bcdbb761cd3e6ed9fec78b7a53d5d0",
-    "docs/OPERATIONS.md": "a4a8a0d976ffb2499d9032740633dfa92707cd41a4c5e6d0d34c50f393d10ebf"
+    "README.md": "b0ceb50b52eb1a952e4c657cd01eb04fd65cb2af486902c211f8c3b9e3fdf0d8",
+    "docs/INSTALLATION.md": "106f97232cf310fb5dab7535cb345577d54e1ef35fd1d696f23240d77fd6b329",
+    "docs/OPERATIONS.md": "e73c2681a5a54458b5fec067cd317ddc6d56420e7c6d4ba597922bcb890823b1"
   },
-  "planned_url": "https://github.com/JachinLan/jjaitech-memory/releases/download/v1.4.1-rc.1-online.1/jjaitech-memory-1.4.1-rc.1-online.1.zip"
+  "planned_url": "https://github.com/JachinLan/jjaitech-memory/releases/download/v1.4.1-rc.2-online.1/jjaitech-memory-1.4.1-rc.2-online.1.zip"
 }

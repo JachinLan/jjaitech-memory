@@ -1,4 +1,4 @@
-# jjaitech-memory 1.4.1-rc.1
+# jjaitech-memory 1.4.1-rc.2
 
 WorkBuddy 的本地个人/工作记忆插件。每人独立使用 AI-Wiki，明确选择后才分享。当前版本重点修复“读过文件但下次找不到”和长时间反复整理。
 
@@ -8,12 +8,12 @@ WorkBuddy 的本地个人/工作记忆插件。每人独立使用 AI-Wiki，明�
 
 **Windows PowerShell**
 ```powershell
-irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.4.1-rc.1-online.1/install.ps1 | iex
+irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.4.1-rc.2-online.1/install.ps1 | iex
 ```
 
 **Mac终端**
 ```sh
-(set -e; jj_install=$(mktemp); trap 'rm -f "$jj_install"' EXIT; curl -fL --retry 3 https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.4.1-rc.1-online.1/install-macos.sh -o "$jj_install"; bash "$jj_install")
+(set -e; jj_install=$(mktemp); trap 'rm -f "$jj_install"' EXIT; curl -fL --retry 3 https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.4.1-rc.2-online.1/install-macos.sh -o "$jj_install"; bash "$jj_install")
 ```
 
 阅读权限和模型处理范围，输入YES，安装成功后重开WorkBuddy。已有Wiki保留；重复执行可修复运行环境路径和升级。缺少依赖会明确提示，企业策略不会被绕过。

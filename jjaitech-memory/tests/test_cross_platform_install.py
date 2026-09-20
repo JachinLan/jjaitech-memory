@@ -74,3 +74,15 @@ class WindowsLineEndingsTests(unittest.TestCase):
         (self.plugin/'.runtime-python-paths').write_bytes((Path(sys.executable).as_posix()+'\r\n').encode('utf-8'))
         (self.plugin/'.runtime-config-root').write_bytes((self.config.as_posix()+'\r\n').encode('utf-8'))
         self.assertIn('passed',i.verify_local_runtime(self.plugin,self.config))
+
+
+class MacRelocationTests(unittest.TestCase):
+    @unittest.skipIf(os.name=='nt','macOS application symlink routing')
+    def test_app_alias_resolves_to_real_volume_and_deduplicates(self):
+        import importlib.util
+        spec=importlib.util.spec_from_file_location('mac_installer',Path(__file__).parents[1]/'scripts/install_local.py')
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);real=root/'外置盘'/ 'WorkBuddy.app';cli=real/'Contents/Resources/app.asar.unpacked/cli/bin/codebuddy';cli.parent.mkdir(parents=True);cli.write_text('fixture')
+            alias=root/'WorkBuddy.app';alias.symlink_to(real,target_is_directory=True)
+            self.assertEqual(module.resolve_apps([alias,real]),[real.resolve()])

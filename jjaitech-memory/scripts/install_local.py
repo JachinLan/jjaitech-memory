@@ -14,6 +14,10 @@ import sys
 from install_common import deploy
 
 
+def resolve_apps(candidates):
+    return list(dict.fromkeys(p.resolve() for p in candidates if p and (p/'Contents/Resources/app.asar.unpacked/cli/bin/codebuddy').is_file()))
+
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--app',type=Path)
@@ -25,10 +29,10 @@ def main():
     import fcntl
     with sqlite3.connect(':memory:') as db:db.execute('CREATE VIRTUAL TABLE check_fts USING fts5(text)')
     candidates=[args.app] if args.app else [Path('/Applications/WorkBuddy.app'),Path.home()/'Applications/WorkBuddy.app']
-    apps=[p for p in candidates if p and (p/'Contents/Resources/app.asar.unpacked/cli/bin/codebuddy').is_file()]
+    apps=resolve_apps(candidates)
     if len(apps)!=1:raise RuntimeError('Cannot uniquely locate WorkBuddy. Pass --app with its actual .app path.')
     app=apps[0];cli=app/'Contents/Resources/app.asar.unpacked/cli/bin/codebuddy'
-    config=args.config_dir.expanduser().absolute()
+    config=args.config_dir.expanduser().resolve()
     if not config.is_dir():raise RuntimeError('Open WorkBuddy and log in first.')
     nodes=list((config/'binaries/node/versions').glob('*/bin/node'))
     if shutil.which('node'):nodes.append(Path(shutil.which('node')))
