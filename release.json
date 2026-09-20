@@ -3,7 +3,7 @@
   "distribution_revision": 1,
   "asset": "jjaitech-memory-1.4.1-rc.2-online.1.zip",
   "sha256": "8922abe524e94f66b27305a92845b053d7258b1a891d21a6c0a4822d28393be2",
-  "windows_native_test": "Cross-platform regression passed; Windows exact rc2 command queued after publication",
+  "windows_native_test": "Exact published rc.2 command installed twice with official WorkBuddy 5.5.6 / CLI 2.137.1; registration, MCP, Raw and settings preservation passed; no employee account/model",
   "status": "pilot-release",
   "wiki_data_included": false,
   "source_files": {
@@ -28,5 +28,8 @@
     "docs/OPERATIONS.md": "7c9037abc072805c25c69727a7cb89c3390444ffd440c457fa4021f8e4a949dc"
   },
   "planned_url": "https://github.com/JachinLan/jjaitech-memory/releases/download/v1.4.1-rc.2-online.1/jjaitech-memory-1.4.1-rc.2-online.1.zip",
-  "platform_ci": "https://github.com/JachinLan/jjaitech-memory/actions/runs/35503674473"
+  "platform_ci": "https://github.com/JachinLan/jjaitech-memory/actions/runs/35503674473",
+  "windows_public_command_ci": "https://github.com/JachinLan/jjaitech-memory/actions/runs/35503848096",
+  "mac_public_command_test": "Passed on macOS arm64 with existing relocated WorkBuddy app/config; version 1.4.1-rc.2 registered and enabled; local MCP and Raw passed",
+  "model_test": "Synthetic isolated current-account save/recall passed on rc.1 installed launcher; rc.2 retains identical core memory runtime, with Mac installation path fixes"
 }

@@ -18,7 +18,7 @@ irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.4.1-rc.2-onli
 
 阅读权限和模型处理范围，输入YES，安装成功后重开WorkBuddy。已有Wiki保留；重复执行可修复运行环境路径和升级。缺少依赖会明确提示，企业策略不会被绕过。
 
-Windows、Apple Silicon Mac、Intel Mac回归通过（Mac含应用别名专项）：[三平台结果](https://github.com/JachinLan/jjaitech-memory/actions/runs/35503674473)。公开命令专项结果见发布页。员工账号桌面验收仍需执行。
+Windows、Apple Silicon Mac、Intel Mac回归通过（Mac含应用别名专项）：[三平台结果](https://github.com/JachinLan/jjaitech-memory/actions/runs/35503674473)。[Windows公开命令连续安装两次通过](https://github.com/JachinLan/jjaitech-memory/actions/runs/35503848096)。Mac公开命令已在实际迁移过应用/配置的电脑上通过。员工Windows账号桌面验收仍需执行。
 
 GitHub无法访问时，可用发布页同一份经校验ZIP离线分发代码；离线包不含运行环境。详见[完整安装手册](docs/INSTALLATION.md)。
 
