@@ -48,3 +48,23 @@ Mac：终端运行`bash /解压目录/jjaitech-memory/distribution/bootstrap-mac
 - 安装后仍不保存：先重开新会话，检查AI-Wiki/.state/MEMORY_STATUS.md与doctor，再检查宿主/模型版本。
 
 日常开关、备份迁移和手工分享见OPERATIONS.md。运行环境选择器能处理路径变化，但不代替宿主大版本兼容测试或完整异机备份。
+
+## 不依赖全局Python的诊断命令
+
+即使电脑没有`py`或`python`命令，也可使用安装好的运行环境选择器。
+
+Windows PowerShell：
+```powershell
+$jjSettings = Get-Content (Join-Path $env:USERPROFILE '.workbuddy\settings.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$jjPlugin = Join-Path $env:USERPROFILE '.workbuddy\local-marketplaces\jjaitech-local\jjaitech-memory'
+& $jjSettings.env.CODEBUDDY_CODE_GIT_BASH_PATH "$jjPlugin/scripts/run-memory.sh" doctor
+```
+
+Mac：
+```sh
+/bin/bash "$HOME/.workbuddy/local-marketplaces/jjaitech-local/jjaitech-memory/scripts/run-memory.sh" doctor
+```
+
+将doctor换成disable/enable/export即可执行对应维护操作。状态页也可直接用文本编辑器打开。
+
+Mac的应用或.workbuddy配置若已通过别名迁到其他本地卷，安装器会解析实际位置再检查和升级；不会自动搬迁Wiki。外置盘断开时应用及其插件不可用，不能把这种情况当作资料丢失后直接初始化覆盖。

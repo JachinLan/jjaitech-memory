@@ -2,9 +2,9 @@
   "plugin_version": "1.4.1-rc.2",
   "distribution_revision": 1,
   "asset": "jjaitech-memory-1.4.1-rc.2-online.1.zip",
-  "sha256": "4b73e58d13dcbe2abacee8c2f975f1fc9001851c6c86d9da82e9bc44a48e1969",
-  "windows_native_test": "NOT RUN",
-  "status": "pilot-unpublished",
+  "sha256": "8922abe524e94f66b27305a92845b053d7258b1a891d21a6c0a4822d28393be2",
+  "windows_native_test": "Cross-platform regression passed; Windows exact rc2 command queued after publication",
+  "status": "pilot-release",
   "wiki_data_included": false,
   "source_files": {
     ".codebuddy-plugin/plugin.json": "bfd1520664bdba025b8a93e3babd53a286be8fb71460232fd66be6148ea2174b",
@@ -24,8 +24,9 @@
     "distribution/bootstrap-windows.ps1": "e3fefd6232dfefcbb5857f6c443a9c1bfc4aa6ed58de0da74994497293b88e48",
     "distribution/bootstrap-macos.sh": "b691f311b5aa6eb702d778798c2d18457346a3ad6c80532bb6da6e20b6fa1b35",
     "README.md": "b0ceb50b52eb1a952e4c657cd01eb04fd65cb2af486902c211f8c3b9e3fdf0d8",
-    "docs/INSTALLATION.md": "106f97232cf310fb5dab7535cb345577d54e1ef35fd1d696f23240d77fd6b329",
-    "docs/OPERATIONS.md": "e73c2681a5a54458b5fec067cd317ddc6d56420e7c6d4ba597922bcb890823b1"
+    "docs/INSTALLATION.md": "07aee645f61882567a345303e6ae3db5461c525409fd6f7fceb1d2fa9a931ccf",
+    "docs/OPERATIONS.md": "7c9037abc072805c25c69727a7cb89c3390444ffd440c457fa4021f8e4a949dc"
   },
-  "planned_url": "https://github.com/JachinLan/jjaitech-memory/releases/download/v1.4.1-rc.2-online.1/jjaitech-memory-1.4.1-rc.2-online.1.zip"
+  "planned_url": "https://github.com/JachinLan/jjaitech-memory/releases/download/v1.4.1-rc.2-online.1/jjaitech-memory-1.4.1-rc.2-online.1.zip",
+  "platform_ci": "https://github.com/JachinLan/jjaitech-memory/actions/runs/35503674473"
 }

@@ -115,3 +115,5 @@ py -3 -X utf8 $MemoryScript doctor
 保存状态直接查看AI-Wiki/.state/MEMORY_STATUS.md；历史回执在.state/receipts。回执反映提交状态，不证明模型已提取每个事实。Raw和实体记忆的保存范围不同。
 
 1.4.1双平台安装优先使用distribution/bootstrap-windows.ps1或bootstrap-macos.sh。安装器增加并发锁、原运行缓存回滚、注册及本地MCP/Raw自动核验，并拒绝自动降级。Hook与MCP通过本地运行环境选择器启动；不依赖安装时那一个版本路径永远存在。Windows明确选定的Git Bash路径保存到settings.env，失败恢复原值。详见INSTALLATION.md。
+
+若没有全局py/python命令，请使用INSTALLATION.md中的run-memory.sh诊断方式。它会复用本机可用运行环境，旧Python路径失效时也可以寻找本地替代。Mac应用/配置的既有软链接会解析到实际位置；Wiki本身不在安装过程中迁移。
