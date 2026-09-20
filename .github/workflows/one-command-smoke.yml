@@ -61,8 +61,8 @@ jobs:
             throw "Unexpected interactive prompt in disposable test: $Prompt"
           }
           # Same command given to employees; only YES input is supplied by this test.
-          irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.4.0-rc.1-online.1/install.ps1 | iex
-          irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.4.0-rc.1-online.1/install.ps1 | iex
+          irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.4.1-rc.1-online.1/install.ps1 | iex
+          irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/v1.4.1-rc.1-online.1/install.ps1 | iex
       - name: Check actual registration, paths, idempotency and local hook storage
         shell: powershell
         run: |

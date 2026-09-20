@@ -18,12 +18,13 @@ rules=settings['permissions']['allow']
 expected_tools=['mcp__jjaitech-memory__'+name for name in ['write_memory','defer_memory','search_memory']]
 assert all(rules.count(name)==1 for name in expected_tools),'local MCP grants missing or duplicated'
 assert not any(x in rules for x in ['mcp__*','DeferExecuteTool']),'permission widened'
+assert Path(settings['env']['CODEBUDDY_CODE_GIT_BASH_PATH']).is_file(),'persistent Git Bash path missing'
 registry=json.loads((config/'plugins/installed_plugins.json').read_text(encoding='utf-8-sig'))
 entries=registry['plugins'][key]
 assert len(entries)==1 and entries[0]['version']==json.loads(Path('release.json').read_text())['plugin_version']
 installed=Path(entries[0]['installPath'])
 expected=json.loads(Path('release.json').read_text())['source_files']
-for rel in ['scripts/memory.py','scripts/portable.py','scripts/sources.py','scripts/quality.py','scripts/memory_mcp.py','scripts/retrieval_guard.py']:
+for rel in ['scripts/memory.py','scripts/portable.py','scripts/sources.py','scripts/quality.py','scripts/run-memory.sh','scripts/memory_mcp.py','scripts/retrieval_guard.py']:
     assert hashlib.sha256((installed/rel).read_bytes()).hexdigest()==expected[rel]
 requests='\n'.join(json.dumps({'jsonrpc':'2.0','id':i,'method':method}) for i,method in enumerate(['initialize','tools/list'],1))+'\n'
 r=subprocess.run([sys.executable,str(installed/'scripts/memory_mcp.py')],input=requests,text=True,capture_output=True,check=True)

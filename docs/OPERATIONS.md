@@ -1,6 +1,6 @@
 # 部署、迁移和日常维护手册
 
-适用源码：1.4.0-rc.1；日期：2026-09-17。发布验证结果见 GitHub Release。Windows 自动化安装验收与登录账号后的桌面模型验收分开记录。
+适用源码：1.4.1-rc.1；日期：2026-09-17。发布验证结果见 GitHub Release。Windows 自动化安装验收与登录账号后的桌面模型验收分开记录。
 
 ## 1. 部署前
 
@@ -113,3 +113,5 @@ py -3 -X utf8 $MemoryScript doctor
 删除事实不等于彻底遗忘：Raw、job、快照、导出包和已分发副本仍可能留存。目前没有跨所有副本的自动删除/撤回机制。
 
 保存状态直接查看AI-Wiki/.state/MEMORY_STATUS.md；历史回执在.state/receipts。回执反映提交状态，不证明模型已提取每个事实。Raw和实体记忆的保存范围不同。
+
+1.4.1双平台安装优先使用distribution/bootstrap-windows.ps1或bootstrap-macos.sh。安装器增加并发锁、原运行缓存回滚、注册及本地MCP/Raw自动核验，并拒绝自动降级。Hook与MCP通过本地运行环境选择器启动；不依赖安装时那一个版本路径永远存在。Windows明确选定的Git Bash路径保存到settings.env，失败恢复原值。详见INSTALLATION.md。
