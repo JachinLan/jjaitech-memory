@@ -48,3 +48,12 @@ class LauncherTests(unittest.TestCase):
         self.assertIn('passed',i.verify_local_runtime(self.plugin,self.config))
 
 if __name__=='__main__':unittest.main()
+
+
+class WindowsLineEndingsTests(unittest.TestCase):
+    setUp=LauncherTests.setUp
+    tearDown=LauncherTests.tearDown
+    def test_crlf_runtime_settings_are_supported(self):
+        (self.plugin/'.runtime-python-paths').write_bytes((Path(sys.executable).as_posix()+'\r\n').encode('utf-8'))
+        (self.plugin/'.runtime-config-root').write_bytes((self.config.as_posix()+'\r\n').encode('utf-8'))
+        self.assertIn('passed',i.verify_local_runtime(self.plugin,self.config))

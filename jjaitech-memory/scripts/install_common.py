@@ -132,7 +132,9 @@ def verify_local_runtime(target,config):
     with tempfile.TemporaryDirectory(prefix='jjaitech-install-check-') as folder:
         root=Path(folder);env=dict(os.environ,JJAITECH_WIKI_ROOT=str(root/'wiki'),CODEBUDDY_CONFIG_DIR=str(config))
         messages='\n'.join(json.dumps({'jsonrpc':'2.0','id':i,'method':method}) for i,method in enumerate(['initialize','tools/list'],1))+'\n'
-        result=subprocess.run(args,input=messages,text=True,encoding='utf-8',env=env,capture_output=True,check=True,timeout=30)
+        try:
+            result=subprocess.run(args,input=messages,text=True,encoding='utf-8',env=env,capture_output=True,check=True,timeout=30)
+        except subprocess.CalledProcessError as exc:raise RuntimeError('Local MCP launch failed: '+(exc.stderr or str(exc))[:700]) from exc
         replies=[json.loads(x) for x in result.stdout.splitlines()]
         if {t['name'] for t in replies[-1]['result']['tools']}!={'write_memory','defer_memory','search_memory'}:raise RuntimeError('Local MCP check failed')
         transcript=root/'session.jsonl';transcript.write_text(json.dumps({'role':'user','content':'Synthetic installation check.'})+'\n',encoding='utf-8')
@@ -181,8 +183,8 @@ def _deploy(source, config, vault, python, run_cli, bash=None, verify=False):
     if (staged/'scripts/run-memory.sh').exists():
         shell=str(bash) if bash else '/bin/bash'
         if any('\n' in str(v) or '\r' in str(v) for v in (python,config,shell)):raise ValueError('runtime paths cannot contain line breaks')
-        (staged/'.runtime-python-paths').write_text(Path(python).as_posix()+'\n',encoding='utf-8')
-        (staged/'.runtime-config-root').write_text(config.as_posix()+'\n',encoding='utf-8')
+        (staged/'.runtime-python-paths').write_bytes((Path(python).as_posix()+'\n').encode('utf-8'))
+        (staged/'.runtime-config-root').write_bytes((config.as_posix()+'\n').encode('utf-8'))
         for event,groups in hooks['hooks'].items():
             for group in groups:
                 for hook in group['hooks']:

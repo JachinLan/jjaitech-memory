@@ -13,11 +13,12 @@ jj_probe() {
 # Installation's validated interpreter is fastest; a moved runtime falls back locally.
 if [ -f "$jj_root/.runtime-python-paths" ]; then
   while IFS= read -r jj_candidate; do
+    jj_candidate=${jj_candidate%$'\r'}
     if jj_probe "$jj_candidate"; then break; fi
   done < "$jj_root/.runtime-python-paths"
 fi
 jj_config=${CODEBUDDY_CONFIG_DIR:-"$HOME/.workbuddy"}
-if [ -f "$jj_root/.runtime-config-root" ]; then IFS= read -r jj_config < "$jj_root/.runtime-config-root"; fi
+if [ -f "$jj_root/.runtime-config-root" ]; then IFS= read -r jj_config < "$jj_root/.runtime-config-root"; jj_config=${jj_config%$'\r'}; fi
 if [ -z "$jj_python" ]; then
   for jj_candidate in "$jj_config"/binaries/python/versions/*/bin/python3 "$jj_config"/binaries/python/versions/*/python.exe "$jj_config"/binaries/python/versions/*/python/python.exe; do
     if jj_probe "$jj_candidate"; then break; fi
