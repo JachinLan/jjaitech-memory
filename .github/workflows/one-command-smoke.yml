@@ -112,7 +112,7 @@ jobs:
             $env:HTTPS_PROXY = 'http://127.0.0.1:1'
             $env:HTTP_PROXY = $env:HTTPS_PROXY
             $env:ALL_PROXY = $env:HTTPS_PROXY
-            python -c "import os,subprocess; p=subprocess.run([os.environ['ComSpec'],'/d','/c','call '+chr(34)+os.environ['JJ_OFFLINE_CMD']+chr(34)],input=b'YES\r\n\r\n',timeout=140); raise SystemExit(p.returncode)"
+            python -c "import os,subprocess; p=subprocess.run([os.environ['ComSpec'],'/d','/c',os.path.basename(os.environ['JJ_OFFLINE_CMD'])],cwd=os.path.dirname(os.environ['JJ_OFFLINE_CMD']),input=b'YES\r\n\r\n',timeout=140); raise SystemExit(p.returncode)"
             if ($LASTEXITCODE -ne 0) { throw 'Local Windows CMD failed' }
             python -X utf8 .github/tests/verify_install.py
             if ($LASTEXITCODE -ne 0) { throw 'Local CMD verification failed' }
