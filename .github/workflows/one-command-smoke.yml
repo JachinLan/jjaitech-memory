@@ -82,7 +82,8 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $release = Get-Content release.json -Raw | ConvertFrom-Json
           $zip = Join-Path $env:RUNNER_TEMP 'employee-code.zip'
-          Invoke-WebRequest -UseBasicParsing 'https://codeload.github.com/JachinLan/jjaitech-memory/zip/refs/heads/main' -OutFile $zip
+          Invoke-WebRequest -UseBasicParsing 'https://gitee.com/JachinLan/jjaitech-memory/raw/main/windows/jjaitech-memory-Windows.zip' -OutFile $zip
+          if ((Get-FileHash -Algorithm SHA256 $zip).Hash -ne '0d21a8d2c12d5d986064ae5d95a46bedefae653d3bdd6179f8470f4e11d30da0') { throw 'Anonymous Gitee payload does not match tested ZIP' }
           $dir = Join-Path $env:RUNNER_TEMP 'employee offline kit'
           Expand-Archive $zip -DestinationPath $dir
           $repo = Join-Path $dir 'jjaitech-memory-main'
