@@ -6,7 +6,7 @@ WorkBuddy 的本地个人/工作记忆插件。每人独立使用 AI-Wiki，明�
 
 [下载 Windows 安装 ZIP（固定入口）](https://codeload.github.com/JachinLan/jjaitech-memory/zip/refs/heads/main)。先登录 WorkBuddy 并等待环境准备完成，退出应用及托盘。将 ZIP **全部解压**，打开解压出的 `jjaitech-memory-main`，双击顶层 **Install-Windows.cmd**。阅读说明后输入 `YES`，成功后重开 WorkBuddy。解压后从本地文件安装插件；若这台电脑缺 Git Bash、Python 或 Node，仍需通过 WinGet 或由 IT 提前补齐。
 
-若公司网络或策略限制下载，可由一人下载同一 ZIP，通过公司批准的渠道转发文件。只有代码，无个人 Wiki 或账号数据。无需改变 PowerShell 执行策略。原 PowerShell 命令仍适用于能访问 GitHub Raw 和 Release 的网络。
+若公司网络或策略限制下载，可由一人下载同一 ZIP，通过公司批准的渠道转发文件。只有代码，无个人 Wiki 或账号数据。无需改变 PowerShell 执行策略。原 PowerShell 命令仍可用。滚动入口 install.ps1 内含已核验的发布包；只要能取到脚本，就不必再连接 GitHub Release。
 
 ## 一条命令安装或升级
 
