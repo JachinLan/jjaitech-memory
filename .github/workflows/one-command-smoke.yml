@@ -5,6 +5,14 @@ permissions:
   contents: read
 jobs:
   published-command:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: '5.5.6'
+            official: 'https://download.codebuddy.cn/workbuddy/saas/win32-x64-user/WorkBuddy-win32-x64-user-5.5.6.38337834-5f969292.exe'
+          - version: '5.9.3'
+            official: 'https://acc-1258344699.cos.ap-guangzhou.myqcloud.com/workbuddy/saas/win32-x64-user/WorkBuddy-win32-x64-user-5.9.3.42398134-d4692421.exe'
     runs-on: windows-latest
     timeout-minutes: 20
     env:
@@ -20,8 +28,8 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          $uri = 'https://download.codebuddy.cn/workbuddy/saas/win32-x64-user/WorkBuddy-win32-x64-user-5.5.6.38337834-5f969292.exe'
-          $exe = Join-Path $env:RUNNER_TEMP 'WorkBuddy-5.5.6.exe'
+          $uri = '${{ matrix.official }}'
+          $exe = Join-Path $env:RUNNER_TEMP 'WorkBuddy-official.exe'
           curl.exe --fail --location --retry 2 --max-time 300 --output $exe $uri
           if ($LASTEXITCODE -ne 0) { throw 'Official download failed' }
           $signature = Get-AuthenticodeSignature -LiteralPath $exe
@@ -68,15 +76,20 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           python -X utf8 .github/tests/verify_install.py
-      - name: Stage the same verified code ZIP for colleague file transfer
+      - name: Download the exact mainland employee ZIP and verify release files
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
           $release = Get-Content release.json -Raw | ConvertFrom-Json
           $zip = Join-Path $env:RUNNER_TEMP 'employee-code.zip'
-          Invoke-WebRequest -UseBasicParsing $release.planned_url -OutFile $zip
-          if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $release.sha256) { throw 'Wrong employee ZIP' }
-          Expand-Archive $zip -DestinationPath (Join-Path $env:RUNNER_TEMP 'employee offline kit')
+          Invoke-WebRequest -UseBasicParsing 'https://codeload.github.com/JachinLan/jjaitech-memory/zip/refs/heads/main' -OutFile $zip
+          $dir = Join-Path $env:RUNNER_TEMP 'employee offline kit'
+          Expand-Archive $zip -DestinationPath $dir
+          $repo = Join-Path $dir 'jjaitech-memory-main'
+          foreach ($file in $release.source_files.PSObject.Properties) {
+            if ((Get-FileHash (Join-Path "$repo/jjaitech-memory" $file.Name) -Algorithm SHA256).Hash -ne $file.Value) { throw "Wrong file in employee download: $($file.Name)" }
+          }
+          if ((Get-FileHash (Join-Path $repo 'Install-Windows.cmd')).Hash -ne (Get-FileHash 'Install-Windows.cmd').Hash) { throw 'Wrong entrypoint' }
       - name: Fresh local CMD install with network blocked for installer runtimes
         shell: powershell
         run: |
@@ -88,7 +101,7 @@ jobs:
           New-Item $cfg -ItemType Directory | Out-Null
           '{"theme":"smoke-test-sentinel"}' | Set-Content (Join-Path $cfg 'settings.json') -Encoding UTF8
           $rules = 'jjaitech-smoke-' + [guid]::NewGuid().ToString('N')
-          $env:JJ_OFFLINE_CMD = Join-Path $env:RUNNER_TEMP 'employee offline kit\jjaitech-memory\deployment\install-windows.cmd'
+          $env:JJ_OFFLINE_CMD = Join-Path $env:RUNNER_TEMP 'employee offline kit\jjaitech-memory-main\Install-Windows.cmd'
           try {
             $runtimes = @((Get-Command powershell.exe).Source, (Get-Command node.exe).Source, (Get-Command python.exe).Source)
             $runtimes += @(Get-Command git.exe,winget.exe,curl.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source)
