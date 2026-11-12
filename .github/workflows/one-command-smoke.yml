@@ -59,23 +59,35 @@ jobs:
           $config = Join-Path $env:USERPROFILE '.workbuddy'
           New-Item -ItemType Directory -Force -Path $config | Out-Null
           '{"theme":"smoke-test-sentinel"}' | Set-Content -LiteralPath (Join-Path $config 'settings.json') -Encoding UTF8
-      - name: Run the exact public command twice with installer consent
+      - name: Fetch public chat link and run its exact independent Windows launcher
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          function global:Read-Host {
-            param([string]$Prompt)
-            if ($Prompt -eq 'Type YES to continue') { return 'YES' }
-            throw "Unexpected interactive prompt in disposable test: $Prompt"
-          }
-          # Same command given to employees; only YES input is supplied by this test.
-          irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/main/install.ps1 | iex
-          irm https://raw.githubusercontent.com/JachinLan/jjaitech-memory/main/install.ps1 | iex
-      - name: Check actual registration, paths, idempotency and local hook storage
-        shell: powershell
-        run: |
-          $ErrorActionPreference = 'Stop'
+          $url = 'https://gitee.com/JachinLan/jjaitech-memory/raw/main/INSTALL-WORKBUDDY.md'
+          $doc = (Invoke-WebRequest -UseBasicParsing $url).Content
+          $cmd = @'
+          Start-Process powershell.exe -ArgumentList '-NoLogo -NoProfile -NoExit -Command "irm https://gitee.com/JachinLan/jjaitech-memory/raw/main/install.ps1 | iex"'
+          '@
+          if (-not $doc.Contains($cmd)) { throw 'Public chat link does not contain the reviewed launch command' }
+          $answer = Join-Path $env:RUNNER_TEMP 'employee-answer.txt'
+          [IO.File]::WriteAllText($answer, "YES`r`nexit`r`n", [Text.Encoding]::ASCII)
+          $log = Join-Path $env:RUNNER_TEMP 'external-install.log'
+          $err = Join-Path $env:RUNNER_TEMP 'external-install.err'
+          $PSDefaultParameterValues = @{'Start-Process:RedirectStandardInput'=$answer;'Start-Process:RedirectStandardOutput'=$log;'Start-Process:RedirectStandardError'=$err;'Start-Process:PassThru'=$true}
+          $child = & ([scriptblock]::Create($cmd))
+          if (-not $child.WaitForExit(150000)) { throw 'Independent installer did not finish' }
+          Get-Content $log -Tail 20
+          if (Test-Path $err) { Get-Content $err -Tail 15 }
           python -X utf8 .github/tests/verify_install.py
+          if ($LASTEXITCODE -ne 0) { throw 'Chat launcher did not produce a verified installation' }
+      - name: Repeat exact Gitee PowerShell command and verify registration and local behavior
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function global:Read-Host { param([string]$Prompt); if ($Prompt -eq 'Type YES to continue') { return 'YES' }; throw "Unexpected prompt: $Prompt" }
+          irm https://gitee.com/JachinLan/jjaitech-memory/raw/main/install.ps1 | iex
+          python -X utf8 .github/tests/verify_install.py
+          if ($LASTEXITCODE -ne 0) { throw 'Repeat install verification failed' }
       - name: Download the exact mainland employee ZIP and verify release files
         shell: powershell
         run: |
