@@ -68,3 +68,41 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           python -X utf8 .github/tests/verify_install.py
+      - name: Stage the same verified code ZIP for colleague file transfer
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $release = Get-Content release.json -Raw | ConvertFrom-Json
+          $zip = Join-Path $env:RUNNER_TEMP 'employee-code.zip'
+          Invoke-WebRequest -UseBasicParsing $release.planned_url -OutFile $zip
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $release.sha256) { throw 'Wrong employee ZIP' }
+          Expand-Archive $zip -DestinationPath (Join-Path $env:RUNNER_TEMP 'employee offline kit')
+      - name: Fresh local CMD install with network blocked for installer runtimes
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cfg = Join-Path $env:USERPROFILE '.workbuddy'
+          Move-Item $cfg (Join-Path $env:RUNNER_TEMP 'online-test-config')
+          $wiki = Join-Path $env:USERPROFILE 'AI-Wiki'
+          if (Test-Path $wiki) { Move-Item $wiki (Join-Path $env:RUNNER_TEMP 'online-test-wiki') }
+          New-Item $cfg -ItemType Directory | Out-Null
+          '{"theme":"smoke-test-sentinel"}' | Set-Content (Join-Path $cfg 'settings.json') -Encoding UTF8
+          $rules = 'jjaitech-smoke-' + [guid]::NewGuid().ToString('N')
+          $env:JJ_OFFLINE_CMD = Join-Path $env:RUNNER_TEMP 'employee offline kit\jjaitech-memory\deployment\install-windows.cmd'
+          try {
+            $runtimes = @((Get-Command powershell.exe).Source, (Get-Command node.exe).Source, (Get-Command python.exe).Source)
+            $runtimes += @(Get-Command git.exe,winget.exe,curl.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source)
+            $runtimes += @(Join-Path $env:ProgramFiles 'Git\bin\bash.exe'; Join-Path $env:ProgramFiles 'Git\usr\bin\bash.exe')
+            foreach ($exe in ($runtimes | Select-Object -Unique)) {
+              if (Test-Path -LiteralPath $exe) { New-NetFirewallRule -DisplayName $rules -Direction Outbound -Action Block -Program $exe -Profile Any | Out-Null }
+            }
+            $env:HTTPS_PROXY = 'http://127.0.0.1:1'
+            $env:HTTP_PROXY = $env:HTTPS_PROXY
+            $env:ALL_PROXY = $env:HTTPS_PROXY
+            python -c "import os,subprocess; p=subprocess.run([os.environ['ComSpec'],'/d','/c','call '+chr(34)+os.environ['JJ_OFFLINE_CMD']+chr(34)],input=b'YES\r\n\r\n',timeout=140); raise SystemExit(p.returncode)"
+            if ($LASTEXITCODE -ne 0) { throw 'Local Windows CMD failed' }
+            python -X utf8 .github/tests/verify_install.py
+            if ($LASTEXITCODE -ne 0) { throw 'Local CMD verification failed' }
+          } finally {
+            Get-NetFirewallRule -DisplayName $rules -ErrorAction SilentlyContinue | Remove-NetFirewallRule
+          }
